@@ -1,0 +1,22 @@
+{
+  "name": "nerolac-dash",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "compliance": "python3 scripts/verify_agent_compliance.py",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "description": "Nerolac Operations Dashboard",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.10"
+  }
+}

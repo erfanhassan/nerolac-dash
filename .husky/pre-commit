@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+set -e
+
+echo "========================================================"
+echo "  NEROLAC PRE-COMMIT HOOK: RUNNING QUALITY & GUARDRAILS"
+echo "========================================================"
+
+# Add local node_modules binaries to PATH
+export PATH="./node_modules/.bin:$PATH"
+
+# Locate Python tools (virtualenv or PATH)
+if [ -f ".venv/bin/ruff" ]; then
+  RUFF=".venv/bin/ruff"
+elif command -v ruff >/dev/null 2>&1; then
+  RUFF="ruff"
+else
+  RUFF="python3 -m ruff"
+fi
+
+if [ -f ".venv/bin/mypy" ]; then
+  MYPY=".venv/bin/mypy"
+elif command -v mypy >/dev/null 2>&1; then
+  MYPY="mypy"
+else
+  MYPY="python3 -m mypy"
+fi
+
+# 1. Python Linting with Ruff
+echo "--> [1/5] Running Ruff (Python linter)..."
+$RUFF check .
+
+# 2. Static Type Checking with mypy
+echo "--> [2/5] Running mypy (Static type checking)..."
+$MYPY scripts/verify_agent_compliance.py
+
+# 3. Frontend Linting with ESLint
+echo "--> [3/5] Running ESLint..."
+npx eslint .
+
+# 4. Code Formatting with Prettier
+echo "--> [4/5] Running Prettier..."
+npx prettier --check .
+
+# 5. Agent Compliance and AST Guardrails
+echo "--> [5/5] Running Agent Compliance & AST Guardrails..."
+python3 scripts/verify_agent_compliance.py
+
+echo "========================================================"
+echo "  ALL PRE-COMMIT GATES PASSED (CODE 0) ✨"
+echo "========================================================"

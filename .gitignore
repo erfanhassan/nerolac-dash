@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Python
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Testing & Coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Next.js & Production
+.next/
+out/
+build/
+dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -1,0 +1,3 @@
+"nerolac_app" "vault_managed_db_secret_2026"
+"postgres" "vault_managed_db_secret_2026"
+"monitoring" "vault_managed_db_secret_2026"

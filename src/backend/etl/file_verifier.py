@@ -26,9 +26,9 @@ class SAPReportType(str, Enum):
     """Supported SAP ERP operational batch reports."""
 
     FAGLL03 = "FAGLL03"  # Financial G/L Account Line Items (Finance Actuals)
-    VA05 = "VA05"        # Sales Order List / Customer Orders (SCM Sales)
-    MB52 = "MB52"        # Warehouse Material Stock / Inventory
-    ME2L = "ME2L"        # Purchase Orders by Vendor (Procurement Register)
+    VA05 = "VA05"  # Sales Order List / Customer Orders (SCM Sales)
+    MB52 = "MB52"  # Warehouse Material Stock / Inventory
+    ME2L = "ME2L"  # Purchase Orders by Vendor (Procurement Register)
     UNKNOWN = "UNKNOWN"  # Unrecognized file type
 
 
@@ -386,9 +386,7 @@ class FileVerifier:
 
         if not exp_hash:
             if self.require_checksum:
-                err_msg = (
-                    f"Missing companion checksum (.sha256) for SAP batch file: '{path.name}'"
-                )
+                err_msg = f"Missing companion checksum (.sha256) for SAP batch file: '{path.name}'"
                 quarantine_path = None
                 meta_path = None
                 if auto_quarantine:

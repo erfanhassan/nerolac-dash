@@ -340,8 +340,7 @@ class StockoutMasker:
                 records = list(reader)
         elif isinstance(data_source, pd.DataFrame):
             records = [
-                {str(k): v for k, v in d.items()}
-                for d in data_source.to_dict(orient="records")
+                {str(k): v for k, v in d.items()} for d in data_source.to_dict(orient="records")
             ]
         else:
             records = list(data_source)

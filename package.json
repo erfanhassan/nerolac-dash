@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
+    "test:visual": "playwright test tests/visual/test_finance_ui.ts",
     "compliance": "python3 scripts/verify_agent_compliance.py",
     "prepare": "husky"
   },
@@ -15,8 +19,22 @@
   "description": "Nerolac Operations Dashboard",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "eslint": "^10.13.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^8.20.5",
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
+    "lucide-react": "^0.460.0",
+    "next": "^16.4.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

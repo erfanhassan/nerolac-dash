@@ -91,12 +91,8 @@ class DatabaseRoutingManager:
                 }
             )
 
-        self.primary_engine: AsyncEngine = create_async_engine(
-            self._primary_url, **engine_kwargs
-        )
-        self.replica_engine: AsyncEngine = create_async_engine(
-            self._replica_url, **engine_kwargs
-        )
+        self.primary_engine: AsyncEngine = create_async_engine(self._primary_url, **engine_kwargs)
+        self.replica_engine: AsyncEngine = create_async_engine(self._replica_url, **engine_kwargs)
 
         self.primary_session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
             self.primary_engine,

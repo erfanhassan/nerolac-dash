@@ -19,12 +19,15 @@ __pycache__/
 coverage/
 *.lcov
 .nyc_output
+test-results/
+playwright-report/
 
 # Next.js & Production
 .next/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Misc
 .DS_Store

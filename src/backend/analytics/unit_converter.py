@@ -232,9 +232,7 @@ class SAPUnitConverter:
 
         # 3. Category fallback
         cat = (category_hint or "DEFAULT").strip().upper()
-        fallback_val = CATEGORY_FALLBACK_DENSITIES.get(
-            cat, CATEGORY_FALLBACK_DENSITIES["DEFAULT"]
-        )
+        fallback_val = CATEGORY_FALLBACK_DENSITIES.get(cat, CATEGORY_FALLBACK_DENSITIES["DEFAULT"])
         logger.info(
             "SKU '%s' not found in SAP Material Master density table. "
             "Applying category fallback (%s: %.2f kg/L)",

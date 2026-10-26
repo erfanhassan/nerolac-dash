@@ -1,0 +1,148 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Nerolac Dash - Bright Light Corporate Design System
+   Enforces:
+   - #FFFFFF Canvas, #F8FAFC Containers, #D32F2F Accents
+   - 1px solid #E2E8F0 Borders
+   - tabular-nums typography for all financial and metric displays
+   - Strict ban on dark mode, glassmorphism, and gradients
+   ========================================================================== */
+
+:root {
+  --canvas-bg: #ffffff;
+  --container-bg: #f8fafc;
+  --container-hover: #f1f5f9;
+  --accent-red: #d32f2f;
+  --accent-red-hover: #b71c1c;
+  --border-color: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --amber-variance: #d97706;
+  --amber-variance-bg: #fef3c7;
+  --emerald-healthy: #059669;
+  --emerald-healthy-bg: #d1fae5;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--canvas-bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Mandatory Tabular Numbers for all metrics and tables */
+.tabular-nums,
+table,
+td,
+th,
+.kpi-value,
+.currency-val,
+.numeric-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Standard Corporate Cards */
+.corporate-card {
+  background-color: var(--container-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.corporate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.corporate-table th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+}
+
+.corporate-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.corporate-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Warm Amber Badge for >5% Spread */
+.badge-variance-amber {
+  background-color: var(--amber-variance-bg);
+  color: var(--amber-variance);
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-variance-normal {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* Custom Corporate Slider Controls */
+.corporate-slider {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.corporate-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.corporate-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}

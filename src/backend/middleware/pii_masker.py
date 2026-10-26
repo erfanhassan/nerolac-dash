@@ -38,15 +38,9 @@ BD_PHONE_REGEX = re.compile(
 BD_NID_KEYWORD_REGEX = re.compile(
     r"(?i)\b(?:nid|national\s*id|smart\s*card|identity\s*no|citizen\s*id)[\s:#=-]*(\d{10}|\d{13}|\d{17})\b"
 )
-BD_NID_17_DIGIT_REGEX = re.compile(
-    r"\b(?:19\d{2}|20[0-2]\d)\d{13}\b"
-)
-BD_NID_13_DIGIT_REGEX = re.compile(
-    r"\b\d{13}\b"
-)
-BD_NID_10_DIGIT_REGEX = re.compile(
-    r"(?i)\b(?:nid|smart\s*nid|id)[\s:#=-]*\b(\d{10})\b"
-)
+BD_NID_17_DIGIT_REGEX = re.compile(r"\b(?:19\d{2}|20[0-2]\d)\d{13}\b")
+BD_NID_13_DIGIT_REGEX = re.compile(r"\b\d{13}\b")
+BD_NID_10_DIGIT_REGEX = re.compile(r"(?i)\b(?:nid|smart\s*nid|id)[\s:#=-]*\b(\d{10})\b")
 
 # 3. Bank Account Numbers & Payment Figures:
 # - Keyword-guided accounts (e.g., A/C: 1234567890123)
@@ -55,12 +49,8 @@ BD_NID_10_DIGIT_REGEX = re.compile(
 BANK_ACCOUNT_KEYWORD_REGEX = re.compile(
     r"(?i)\b(?:a/?c|acc(?:ount)?|bank\s*a/?c|acct|iban|bban)[\s:#=-]*(\d{8,18})\b"
 )
-BANK_ACCOUNT_HYPHEN_REGEX = re.compile(
-    r"\b\d{3,4}[- ]\d{3,4}[- ]\d{4,10}\b"
-)
-CREDIT_CARD_REGEX = re.compile(
-    r"\b(?:\d{4}[ -]?){3}\d{4}\b"
-)
+BANK_ACCOUNT_HYPHEN_REGEX = re.compile(r"\b\d{3,4}[- ]\d{3,4}[- ]\d{4,10}\b")
+CREDIT_CARD_REGEX = re.compile(r"\b(?:\d{4}[ -]?){3}\d{4}\b")
 
 REDACTED_PHONE_TAG = "[BD_PHONE_REDACTED]"
 REDACTED_NID_TAG = "[BD_NID_REDACTED]"

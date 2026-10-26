@@ -120,9 +120,7 @@ class DeadLetterHandler:
         schema_cls = self.get_schema_for_report(rep_enum)
         time_slug = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         rand_token = uuid.uuid4().hex[:6]
-        resolved_batch_id = (
-            batch_id or f"BATCH_{rep_enum.value}_{time_slug}_{rand_token}"
-        )
+        resolved_batch_id = batch_id or f"BATCH_{rep_enum.value}_{time_slug}_{rand_token}"
 
         valid_records: list[dict[str, Any]] = []
         dead_letter_records: list[DeadLetterEntry] = []
@@ -193,9 +191,7 @@ class DeadLetterHandler:
         batch_id: str | None = None,
     ) -> ValidationReport:
         raw_records = df.to_dict(orient="records")
-        records: list[dict[str, Any]] = [
-            {str(k): v for k, v in r.items()} for r in raw_records
-        ]
+        records: list[dict[str, Any]] = [{str(k): v for k, v in r.items()} for r in raw_records]
         return self.validate_records(records, report_type, batch_id=batch_id)
 
     def validate_csv(

@@ -140,9 +140,7 @@ class HistoricalSAPBackfillWorker:
         """Persist execution performance metrics into nerolac_ops.audit_logs table."""
         action = "HISTORICAL_BACKFILL"
         entity_type = (
-            "SAP_TRIAL_BALANCES"
-            if "trial_balance" in result.target_table
-            else "HISTORICAL_SALES"
+            "SAP_TRIAL_BALANCES" if "trial_balance" in result.target_table else "HISTORICAL_SALES"
         )
         entity_id = result.batch_id
 
@@ -173,11 +171,7 @@ class HistoricalSAPBackfillWorker:
 
     async def backfill_trial_balances(
         self,
-        records: (
-            Sequence[dict[str, Any] | TrialBalanceRecord | tuple[Any, ...]]
-            | Path
-            | str
-        ),
+        records: (Sequence[dict[str, Any] | TrialBalanceRecord | tuple[Any, ...]] | Path | str),
         batch_id: str | None = None,
         user_id: str | None = None,
         ip_address: str = "127.0.0.1",
@@ -288,9 +282,7 @@ class HistoricalSAPBackfillWorker:
                 batches_processed += 1
 
             duration = time.perf_counter() - t0
-            throughput = (
-                round(total_rows / duration, 2) if duration > 0 else float(total_rows)
-            )
+            throughput = round(total_rows / duration, 2) if duration > 0 else float(total_rows)
 
             result = BackfillResult(
                 batch_id=run_id,
@@ -327,9 +319,7 @@ class HistoricalSAPBackfillWorker:
         except Exception as exc:
             duration = time.perf_counter() - t0
             throughput = (
-                round(batches_processed * self.batch_size / duration, 2)
-                if duration > 0
-                else 0.0
+                round(batches_processed * self.batch_size / duration, 2) if duration > 0 else 0.0
             )
             err_result = BackfillResult(
                 batch_id=run_id,
@@ -361,11 +351,7 @@ class HistoricalSAPBackfillWorker:
 
     async def backfill_historical_sales(
         self,
-        records: (
-            Sequence[dict[str, Any] | HistoricalSalesRecord | tuple[Any, ...]]
-            | Path
-            | str
-        ),
+        records: (Sequence[dict[str, Any] | HistoricalSalesRecord | tuple[Any, ...]] | Path | str),
         batch_id: str | None = None,
         user_id: str | None = None,
         ip_address: str = "127.0.0.1",
@@ -484,9 +470,7 @@ class HistoricalSAPBackfillWorker:
                 batches_processed += 1
 
             duration = time.perf_counter() - t0
-            throughput = (
-                round(total_rows / duration, 2) if duration > 0 else float(total_rows)
-            )
+            throughput = round(total_rows / duration, 2) if duration > 0 else float(total_rows)
 
             result = BackfillResult(
                 batch_id=run_id,

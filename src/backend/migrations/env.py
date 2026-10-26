@@ -61,6 +61,7 @@ async def run_async_migrations() -> None:
     async with connectable.connect() as connection:
         # Ensure target schema exists before running migrations
         from sqlalchemy import text
+
         await connection.execute(text("CREATE SCHEMA IF NOT EXISTS nerolac_ops;"))
         await connection.commit()
         await connection.run_sync(do_run_migrations)

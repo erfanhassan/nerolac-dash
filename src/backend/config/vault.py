@@ -65,9 +65,7 @@ class VaultClient:
 
         # Setup encryption cipher for fallback store
         key = (
-            fallback_key
-            or os.getenv("VAULT_FALLBACK_KEY", "").encode()
-            or DEFAULT_DEV_FALLBACK_KEY
+            fallback_key or os.getenv("VAULT_FALLBACK_KEY", "").encode() or DEFAULT_DEV_FALLBACK_KEY
         )
         self._fernet = Fernet(key)
 

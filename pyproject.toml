@@ -49,3 +49,7 @@ exclude = [
     "node_modules",
     "\\.next",
 ]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg.*", "alembic.*", "hvac.*"]
+ignore_missing_imports = true

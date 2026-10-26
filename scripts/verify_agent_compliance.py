@@ -63,6 +63,8 @@ APPROVED_PYTHON_DEPS = {
     "pandera",
     "pandas",
     "eval_type_backport",
+    "lightgbm",
+    "prophet",
 }
 
 # Banned UI tokens & patterns (Strict Bright Light Corporate Mode)

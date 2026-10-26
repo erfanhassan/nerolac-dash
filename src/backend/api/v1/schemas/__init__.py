@@ -23,6 +23,12 @@ from src.backend.api.v1.schemas.hr_schemas import (
     RadarAxisIndicator,
     VacantTerritoryModel,
 )
+from src.backend.api.v1.schemas.supply_chain_schemas import (
+    DemandForecastResponse,
+    MRPProposalItem,
+    MRPProposalsResponse,
+    TimeSeriesDataPoint,
+)
 
 __all__ = [
     # Finance
@@ -46,4 +52,9 @@ __all__ = [
     "CTCScatterPoint",
     "QuadrantSummary",
     "CTCScatterPlotResponse",
+    # Supply Chain
+    "TimeSeriesDataPoint",
+    "DemandForecastResponse",
+    "MRPProposalItem",
+    "MRPProposalsResponse",
 ]

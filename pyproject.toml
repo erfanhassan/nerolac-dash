@@ -16,6 +16,8 @@ dependencies = [
     "pandera>=0.20.0",
     "pandas>=2.0.0",
     "eval-type-backport>=0.2.0",
+    "lightgbm>=4.0.0",
+    "prophet>=1.1.0",
 ]
 
 [project.optional-dependencies]
@@ -55,7 +57,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*"]
+module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*", "lightgbm.*", "prophet.*", "cmdstanpy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

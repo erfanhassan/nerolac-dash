@@ -118,17 +118,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             HR Workforce Intelligence
           </Link>
 
-          <div
+          <Link
+            id="nav-supply-chain"
+            href="/supply-chain"
             style={{
+              display: 'flex',
+              alignItems: 'center',
               padding: '8px 12px',
-              color: '#64748B',
+              borderRadius: '4px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderLeft: '3px solid #D32F2F',
+              color: '#0F172A',
+              fontWeight: 600,
               fontSize: '13px',
+              textDecoration: 'none',
               marginBottom: '4px',
-              cursor: 'not-allowed',
             }}
           >
-            SCM & Inventory
-          </div>
+            Supply Chain (SCM & MRP)
+          </Link>
 
           <div
             style={{

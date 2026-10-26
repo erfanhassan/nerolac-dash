@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { TopBar } from '@/components/layout/TopBar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div
+              id="nerolac-brand-logo-mark"
               style={{
                 width: '12px',
                 height: '24px',
@@ -180,68 +182,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Top Navbar */}
-        <header
-          style={{
-            height: '56px',
-            backgroundColor: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 24px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span
-              style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                color: '#0F172A',
-              }}
-            >
-              Finance Control Center (Module 1)
-            </span>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#D32F2F',
-                backgroundColor: '#FFEBEE',
-                border: '1px solid #FFCDD2',
-                padding: '2px 8px',
-                borderRadius: '4px',
-              }}
-            >
-              GL 10000–10017
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>
-              Base Currency: <strong>BDT (৳)</strong>
-            </span>
-            <div
-              style={{
-                width: '1px',
-                height: '16px',
-                backgroundColor: '#E2E8F0',
-              }}
-            />
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#334155',
-                backgroundColor: '#F1F5F9',
-                padding: '4px 8px',
-                borderRadius: '4px',
-              }}
-            >
-              FINANCE_DIRECTOR
-            </span>
-          </div>
-        </header>
+        {/* Global Top Bar */}
+        <TopBar />
 
         {/* Dashboard View Body */}
         <main

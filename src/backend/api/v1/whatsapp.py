@@ -172,8 +172,7 @@ async def get_whatsapp_messages(
             if q in m.raw_text.lower()
             or q in m.sender_name.lower()
             or (
-                m.dealer
-                and (q in m.dealer.trade_name.lower() or q in m.dealer.dealer_code.lower())
+                m.dealer and (q in m.dealer.trade_name.lower() or q in m.dealer.dealer_code.lower())
             )
         ]
 

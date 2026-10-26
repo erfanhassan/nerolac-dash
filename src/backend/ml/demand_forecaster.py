@@ -28,9 +28,7 @@ import pandas as pd
 try:
     import sklearn  # type: ignore[import-untyped]
 
-    _sklearn_libomp = os.path.join(
-        os.path.dirname(sklearn.__file__), ".dylibs", "libomp.dylib"
-    )
+    _sklearn_libomp = os.path.join(os.path.dirname(sklearn.__file__), ".dylibs", "libomp.dylib")
     if os.path.exists(_sklearn_libomp):
         ctypes.CDLL(_sklearn_libomp)
 except Exception:
@@ -242,18 +240,12 @@ class DemandForecaster:
             for d_idx, depot_id in enumerate(ALL_DEPOTS):
                 # Depot scale factors (Dhaka & Chittagong are largest)
                 depot_scale = (
-                    1.45
-                    if depot_id == "DEPOT_01"
-                    else 1.25
-                    if depot_id == "DEPOT_02"
-                    else 0.85
+                    1.45 if depot_id == "DEPOT_01" else 1.25 if depot_id == "DEPOT_02" else 0.85
                 )
 
                 for sku in CORE_SKUS:
                     base_liters = float(str(sku["base_monthly_liters"]))
-                    mean_val = (
-                        base_liters * seasonal_factor * trend_factor * depot_scale
-                    )
+                    mean_val = base_liters * seasonal_factor * trend_factor * depot_scale
 
                     # Add Gaussian noise
                     np.random.seed(int(dt.timestamp()) % 10000 + d_idx)
@@ -263,9 +255,7 @@ class DemandForecaster:
                     # Periodically inject historical stockouts (MB52 zero-inventory)
                     # to test stockout preprocessing mask
                     is_stockout = False
-                    if (
-                        month == 6 and d_idx % 3 == 0 and sku["sku_id"] == "SKU_DEC_01"
-                    ):
+                    if month == 6 and d_idx % 3 == 0 and sku["sku_id"] == "SKU_DEC_01":
                         is_stockout = True
                         liters = 0.0  # Zero sales recorded due to stockout!
 
@@ -300,12 +290,8 @@ class DemandForecaster:
             stockout_indices = group[group["is_stockout_flag"]].index
             if len(stockout_indices) > 0:
                 # Calculate mean of non-stockout periods
-                valid_mean = group[~group["is_stockout_flag"]][
-                    "quantity_liters"
-                ].mean()
-                clean_df.loc[stockout_indices, "quantity_liters"] = round(
-                    valid_mean, 2
-                )
+                valid_mean = group[~group["is_stockout_flag"]]["quantity_liters"].mean()
+                clean_df.loc[stockout_indices, "quantity_liters"] = round(valid_mean, 2)
                 logger.info(
                     "Imputed %d stockout months for %s in %s with mean %.2f Liters",
                     len(stockout_indices),
@@ -328,15 +314,9 @@ class DemandForecaster:
         # 1. Train LightGBM Model
         # Feature Engineering: Lag 1, Lag 2, Lag 3, Rolling Mean 3
         clean_df = clean_df.sort_values(by=["depot_id", "sku_id", "ds"])
-        clean_df["lag_1"] = clean_df.groupby(["depot_id", "sku_id"])[
-            "quantity_liters"
-        ].shift(1)
-        clean_df["lag_2"] = clean_df.groupby(["depot_id", "sku_id"])[
-            "quantity_liters"
-        ].shift(2)
-        clean_df["lag_3"] = clean_df.groupby(["depot_id", "sku_id"])[
-            "quantity_liters"
-        ].shift(3)
+        clean_df["lag_1"] = clean_df.groupby(["depot_id", "sku_id"])["quantity_liters"].shift(1)
+        clean_df["lag_2"] = clean_df.groupby(["depot_id", "sku_id"])["quantity_liters"].shift(2)
+        clean_df["lag_3"] = clean_df.groupby(["depot_id", "sku_id"])["quantity_liters"].shift(3)
         clean_df["rolling_mean_3"] = clean_df.groupby(["depot_id", "sku_id"])[
             "quantity_liters"
         ].transform(lambda x: x.rolling(3, min_periods=1).mean())
@@ -416,9 +396,7 @@ class DemandForecaster:
             hist_df = hist_df[hist_df["sku_id"] == sku_id]
 
         # Aggregate monthly actuals for selected slice
-        monthly_actuals = (
-            hist_df.groupby("ds")["quantity_liters"].sum().sort_index().reset_index()
-        )
+        monthly_actuals = hist_df.groupby("ds")["quantity_liters"].sum().sort_index().reset_index()
 
         series_data: list[TimeSeriesDataPoint] = []
 
@@ -484,12 +462,8 @@ class DemandForecaster:
         lgb_m2 = lgb_m1 * 1.03  # +3% continued demand
 
         # Weighted Ensemble: 55% LightGBM + 45% Prophet
-        m1_ensemble = round(
-            (lgb_m1 * self.lgb_weight) + (p_m1_yhat * self.prophet_weight), 2
-        )
-        m2_ensemble = round(
-            (lgb_m2 * self.lgb_weight) + (p_m2_yhat * self.prophet_weight), 2
-        )
+        m1_ensemble = round((lgb_m1 * self.lgb_weight) + (p_m1_yhat * self.prophet_weight), 2)
+        m2_ensemble = round((lgb_m2 * self.lgb_weight) + (p_m2_yhat * self.prophet_weight), 2)
 
         # Confidence intervals: 80% (1.28 sigma) and 95% (1.96 sigma)
         sigma_m1 = m1_ensemble * 0.055  # 5.5% model standard error
@@ -538,9 +512,7 @@ class DemandForecaster:
             if not depot_id or depot_id == "ALL"
             else depot_id,
             sku_id=sku_id or "ALL",
-            sku_name="All Product Categories"
-            if not sku_id or sku_id == "ALL"
-            else sku_id,
+            sku_name="All Product Categories" if not sku_id or sku_id == "ALL" else sku_id,
             unit_of_measure="LITERS",
             model_name="Ensemble (LightGBM 55% + Prophet 45%)",
             training_period_months=24,
@@ -583,24 +555,18 @@ class DemandForecaster:
                 continue
 
             # BOM explosion: Gross Requirement = 2-month projected liters * consumption rate
-            gross_req = round(
-                two_month_forecast_liters * item["consumption_kg_per_liter"], 2
-            )
+            gross_req = round(two_month_forecast_liters * item["consumption_kg_per_liter"], 2)
             curr_stock = float(item["current_stock_kg"])
             safety_stock = float(item["safety_stock_kg"])
             lead_days = int(item["lead_time_days"])
 
             # Net requirement = Gross Requirement + Safety Stock Buffer - Current Physical Inventory
-            net_shortfall = round(
-                max(0.0, gross_req + safety_stock - curr_stock), 2
-            )
+            net_shortfall = round(max(0.0, gross_req + safety_stock - curr_stock), 2)
 
             # Reorder Indent: Align to standard 500kg / 1,000kg pallet lots
             lot_size = 1000.0
             reorder_kg = (
-                math.ceil(net_shortfall / lot_size) * lot_size
-                if net_shortfall > 0
-                else 0.0
+                math.ceil(net_shortfall / lot_size) * lot_size if net_shortfall > 0 else 0.0
             )
 
             po_cost = round(reorder_kg * item["unit_cost_bdt"], 2)
@@ -610,14 +576,14 @@ class DemandForecaster:
                 status = "CRITICAL_STOCKOUT_RISK"
                 critical_count += 1
                 guidance = (
-                    f"Immediate PO dispatch required. Stock buffer ({curr_stock/1000:.1f} MT) "
-                    f"is <50% of safety threshold ({safety_stock/1000:.1f} MT). "
+                    f"Immediate PO dispatch required. Stock buffer ({curr_stock / 1000:.1f} MT) "
+                    f"is <50% of safety threshold ({safety_stock / 1000:.1f} MT). "
                     f"Lead time: {lead_days} days."
                 )
             elif curr_stock < safety_stock:
                 status = "REORDER_REQUIRED"
                 guidance = (
-                    f"Initiate purchase indent of {reorder_kg/1000:.1f} MT to maintain "
+                    f"Initiate purchase indent of {reorder_kg / 1000:.1f} MT to maintain "
                     f"uninterrupted plant production buffer."
                 )
             elif curr_stock > safety_stock * 1.5:
@@ -631,7 +597,7 @@ class DemandForecaster:
                 continue
 
             proposal = MRPProposalItem(
-                indent_id=f"IND-2024-{idx+101:03d}",
+                indent_id=f"IND-2024-{idx + 101:03d}",
                 material_code=item["code"],
                 material_name=item["name"],
                 category=item["category"],

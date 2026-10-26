@@ -228,43 +228,35 @@ class DailyReconciliationEngine:
             elif wa_sales > 0 and sap_sales == 0:
                 ex_type = "OVER_REPORTED"
                 reason = (
-                    (sap_item.get("exception_reason") if sap_item else None)
-                    or "WhatsApp field sale reported, but zero corresponding SAP invoice found."
-                )
+                    sap_item.get("exception_reason") if sap_item else None
+                ) or "WhatsApp field sale reported, but zero corresponding SAP invoice found."
                 guidance = (
-                    (sap_item.get("action_guidance") if sap_item else None)
-                    or "Check SAP order entry queue for unbilled delivery notes."
-                )
+                    sap_item.get("action_guidance") if sap_item else None
+                ) or "Check SAP order entry queue for unbilled delivery notes."
             elif wa_sales == 0 and sap_sales > 0:
                 ex_type = "MISSING_WHATSAPP_REPORT"
                 reason = (
-                    (sap_item.get("exception_reason") if sap_item else None)
-                    or "SAP invoice generated without sales rep WhatsApp field report."
-                )
+                    sap_item.get("exception_reason") if sap_item else None
+                ) or "SAP invoice generated without sales rep WhatsApp field report."
                 guidance = (
-                    (sap_item.get("action_guidance") if sap_item else None)
-                    or "Sales rep must submit missing end-of-day field dispatch note."
-                )
+                    sap_item.get("action_guidance") if sap_item else None
+                ) or "Sales rep must submit missing end-of-day field dispatch note."
             elif wa_sales > sap_sales:
                 ex_type = "OVER_REPORTED"
                 reason = (
-                    (sap_item.get("exception_reason") if sap_item else None)
-                    or f"Reported sales exceed SAP invoice by BDT {abs_var:,.0f}."
-                )
+                    sap_item.get("exception_reason") if sap_item else None
+                ) or f"Reported sales exceed SAP invoice by BDT {abs_var:,.0f}."
                 guidance = (
-                    (sap_item.get("action_guidance") if sap_item else None)
-                    or "Investigate partial delivery or order backlog in SAP SD."
-                )
+                    sap_item.get("action_guidance") if sap_item else None
+                ) or "Investigate partial delivery or order backlog in SAP SD."
             else:
                 ex_type = "UNDER_REPORTED"
                 reason = (
-                    (sap_item.get("exception_reason") if sap_item else None)
-                    or f"SAP invoice exceeds field reported volume by BDT {abs_var:,.0f}."
-                )
+                    sap_item.get("exception_reason") if sap_item else None
+                ) or f"SAP invoice exceeds field reported volume by BDT {abs_var:,.0f}."
                 guidance = (
-                    (sap_item.get("action_guidance") if sap_item else None)
-                    or "Verify counter billing receipts with dealer ledger."
-                )
+                    sap_item.get("action_guidance") if sap_item else None
+                ) or "Verify counter billing receipts with dealer ledger."
 
             reconciled_items.append(
                 {

@@ -165,8 +165,8 @@ class TestDemandForecasterMLPipeline:
             elapsed_mrp_ms = (time.perf_counter() - start_mrp) * 1000.0
 
             assert resp_mrp.status_code == 200
-            assert (
-                elapsed_mrp_ms < 50.0
-            ), f"MRP API response exceeded 50ms SLA: took {elapsed_mrp_ms:.2f}ms"
+            assert elapsed_mrp_ms < 50.0, (
+                f"MRP API response exceeded 50ms SLA: took {elapsed_mrp_ms:.2f}ms"
+            )
             mrp_data = resp_mrp.json()
             assert mrp_data["total_materials_monitored"] >= 8

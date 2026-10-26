@@ -203,11 +203,13 @@ class PIIMaskingMiddleware:
                     response_start["headers"] = headers
                     await send(response_start)
 
-                await send({
-                    "type": "http.response.body",
-                    "body": final_body,
-                    "more_body": False,
-                })
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": final_body,
+                        "more_body": False,
+                    }
+                )
                 return
 
             await send(message)

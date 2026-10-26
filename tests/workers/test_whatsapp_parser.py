@@ -47,9 +47,7 @@ class TestWhatsAppBanglishParser:
         assert "chittagong" in normalized
         assert "collected" in normalized
 
-    def test_vector_fuzzy_dealer_resolution_bismillah(
-        self, parser: WhatsAppBanglishParser
-    ) -> None:
+    def test_vector_fuzzy_dealer_resolution_bismillah(self, parser: WhatsAppBanglishParser) -> None:
         """Assert 'Bismillah H/W CTG' resolves to SAP Dealer D-40982 with high confidence."""
         query = "Bismillah H/W CTG"
         dealer = parser.resolve_dealer(query)

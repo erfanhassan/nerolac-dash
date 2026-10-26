@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -27,8 +28,47 @@ from sqlalchemy.pool import NullPool
 
 from src.backend.config.settings import is_sovereign_host
 from src.backend.config.vault import get_vault_client
+from src.backend.middleware.auth_middleware import (
+    current_depot_id,
+    current_user_id,
+    current_user_role,
+)
 
 logger = logging.getLogger("nerolac.database.router")
+
+
+def _sanitize_session_identifier(value: str) -> str:
+    """Sanitize identifier to letters, digits, and underscores to prevent SQL injection."""
+    return re.sub(r"[^A-Za-z0-9_]", "", value)
+
+
+async def apply_rls_session_variables(
+    session: AsyncSession,
+    depot_id: str | None = None,
+    user_role: str | None = None,
+) -> None:
+    """Apply PostgreSQL Row-Level Security (RLS) session variables before query execution.
+
+    Sets:
+    - SET LOCAL ROLE nerolac_rls_user; (ensures RLS enforcement even in superuser dev environments)
+    - SET LOCAL app.current_depot_id = '<depot_id>';
+    - SET LOCAL app.current_user_role = '<user_role>';
+    """
+    effective_depot = depot_id if depot_id is not None else current_depot_id.get()
+    effective_role = user_role if user_role is not None else current_user_role.get()
+
+    if effective_depot or effective_role:
+        try:
+            await session.execute(text("SET LOCAL ROLE nerolac_rls_user;"))
+        except Exception:
+            pass
+
+    if effective_depot:
+        clean_depot = _sanitize_session_identifier(effective_depot)
+        await session.execute(text(f"SET LOCAL app.current_depot_id = '{clean_depot}';"))
+    if effective_role:
+        clean_role = _sanitize_session_identifier(effective_role)
+        await session.execute(text(f"SET LOCAL app.current_user_role = '{clean_role}';"))
 
 
 class DatabaseRoutingManager:
@@ -109,10 +149,15 @@ class DatabaseRoutingManager:
         )
 
     @asynccontextmanager
-    async def get_primary_session(self) -> AsyncIterator[AsyncSession]:
-        """Provide a dedicated write session connected to the Primary DB."""
+    async def get_primary_session(
+        self,
+        depot_id: str | None = None,
+        user_role: str | None = None,
+    ) -> AsyncIterator[AsyncSession]:
+        """Provide a dedicated write session connected to Primary DB with RLS context."""
         session: AsyncSession = self.primary_session_factory()
         try:
+            await apply_rls_session_variables(session, depot_id=depot_id, user_role=user_role)
             yield session
             await session.commit()
         except Exception:
@@ -122,12 +167,17 @@ class DatabaseRoutingManager:
             await session.close()
 
     @asynccontextmanager
-    async def get_replica_session(self) -> AsyncIterator[AsyncSession]:
-        """Provide a dedicated read session connected to the Read Replica."""
+    async def get_replica_session(
+        self,
+        depot_id: str | None = None,
+        user_role: str | None = None,
+    ) -> AsyncIterator[AsyncSession]:
+        """Provide a dedicated read session connected to Read Replica with RLS context."""
         session: AsyncSession = self.replica_session_factory()
         try:
             # Enforce read-only isolation on replica sessions
             await session.execute(text("SET TRANSACTION READ ONLY;"))
+            await apply_rls_session_variables(session, depot_id=depot_id, user_role=user_role)
             yield session
         except Exception:
             await session.rollback()
@@ -170,18 +220,24 @@ def get_routing_manager() -> DatabaseRoutingManager:
 
 
 @asynccontextmanager
-async def get_write_session() -> AsyncIterator[AsyncSession]:
+async def get_write_session(
+    depot_id: str | None = None,
+    user_role: str | None = None,
+) -> AsyncIterator[AsyncSession]:
     """Context manager for write transactions targeting the Primary DB."""
     router = get_routing_manager()
-    async with router.get_primary_session() as session:
+    async with router.get_primary_session(depot_id=depot_id, user_role=user_role) as session:
         yield session
 
 
 @asynccontextmanager
-async def get_read_session() -> AsyncIterator[AsyncSession]:
+async def get_read_session(
+    depot_id: str | None = None,
+    user_role: str | None = None,
+) -> AsyncIterator[AsyncSession]:
     """Context manager for heavy analytical queries targeting the Read Replica."""
     router = get_routing_manager()
-    async with router.get_replica_session() as session:
+    async with router.get_replica_session(depot_id=depot_id, user_role=user_role) as session:
         yield session
 
 
@@ -195,3 +251,22 @@ async def provide_read_session() -> AsyncIterator[AsyncSession]:
     """FastAPI Dependency Injection providing Read Replica analytical read session."""
     async with get_read_session() as session:
         yield session
+
+
+@asynccontextmanager
+async def rls_context(
+    depot_id: str,
+    user_role: str,
+    user_id: str | None = None,
+) -> AsyncIterator[None]:
+    """Scoped context manager setting RLS contextvars for a code block."""
+    t_depot = current_depot_id.set(depot_id)
+    t_role = current_user_role.set(user_role)
+    t_user = current_user_id.set(user_id) if user_id else None
+    try:
+        yield
+    finally:
+        current_depot_id.reset(t_depot)
+        current_user_role.reset(t_role)
+        if t_user is not None:
+            current_user_id.reset(t_user)

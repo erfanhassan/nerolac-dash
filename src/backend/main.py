@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.backend.api.v1 import api_v1_router
 from src.backend.config.redis_config import get_redis_routing_manager
 from src.backend.database.session_router import get_routing_manager
+from src.backend.middleware.auth_middleware import AuthMiddleware
 from src.backend.middleware.pii_masker import PIIMaskingMiddleware
 from src.backend.middleware.rate_limiter import RateLimiterMiddleware
 
@@ -71,7 +72,10 @@ def create_app() -> FastAPI:
     # 3. PII Masking Middleware (Bangladeshi NID, Phone, Bank Account Redaction)
     app.add_middleware(PIIMaskingMiddleware)
 
-    # 4. Include API Routers
+    # 4. Microsoft Entra ID JWT Validation & RLS Claims Middleware
+    app.add_middleware(AuthMiddleware)
+
+    # 5. Include API Routers
     app.include_router(api_v1_router, prefix="/api")
 
     @app.get("/health", tags=["System Health"])

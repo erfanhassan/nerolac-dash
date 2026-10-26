@@ -72,9 +72,7 @@ class MRPProposalItem(BaseModel):
     gross_requirement_kg: float = Field(
         ..., description="Total raw material required for 2-month demand"
     )
-    net_shortfall_kg: float = Field(
-        ..., description="Net deficit considering current buffer stock"
-    )
+    net_shortfall_kg: float = Field(..., description="Net deficit considering current buffer stock")
     recommended_reorder_kg: float = Field(
         ..., description="Recommended purchase order quantity in KG"
     )

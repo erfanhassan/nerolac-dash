@@ -186,9 +186,7 @@ class ReconciliationExceptionItem(BaseModel):
     sap_invoiced_sales_bdt: float = Field(
         ..., description="Official SAP invoiced sales amount in BDT"
     )
-    variance_bdt: float = Field(
-        ..., description="Variance (WhatsApp - SAP) in BDT"
-    )
+    variance_bdt: float = Field(..., description="Variance (WhatsApp - SAP) in BDT")
     variance_pct: float = Field(..., description="Percentage variance vs SAP")
     exception_type: str = Field(
         ...,
@@ -234,6 +232,4 @@ class DailyReconciliationResponse(BaseModel):
     top_10_exceptions: list[ReconciliationExceptionItem] = Field(
         ..., description="Top 10 highest-variance exceptions"
     )
-    depot_summaries: list[DepotReconSummary] = Field(
-        ..., description="Summary across all 8 depots"
-    )
+    depot_summaries: list[DepotReconSummary] = Field(..., description="Summary across all 8 depots")

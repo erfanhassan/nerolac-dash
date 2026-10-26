@@ -329,9 +329,7 @@ class WhatsAppBanglishParser:
             normalized = re.sub(pattern, replacement, normalized)
         return normalized.strip()
 
-    def resolve_dealer(
-        self, query_text: str, threshold: float = 0.55
-    ) -> ResolvedDealerItem | None:
+    def resolve_dealer(self, query_text: str, threshold: float = 0.55) -> ResolvedDealerItem | None:
         """Resolve dealer using pgvector cosine similarity + RapidFuzz hybrid scoring."""
         norm_query = self.normalize_banglish(query_text)
         query_vec = generate_character_ngram_vector(norm_query)
@@ -364,10 +362,7 @@ class WhatsAppBanglishParser:
             vec_sim = cosine_similarity(query_vec, d_vec)
 
             # 3. RapidFuzz Fuzzy String Matching
-            alias_scores = [
-                fuzz.token_sort_ratio(norm_query, a.lower()) / 100.0
-                for a in d_aliases
-            ]
+            alias_scores = [fuzz.token_sort_ratio(norm_query, a.lower()) / 100.0 for a in d_aliases]
             name_score = fuzz.WRatio(norm_query, d_name.lower()) / 100.0
             fuzz_score = max([name_score] + alias_scores)
 

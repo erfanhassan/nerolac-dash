@@ -2,11 +2,13 @@
 
 from src.backend.database.session_router import (
     DatabaseRoutingManager,
+    apply_rls_session_variables,
     get_read_session,
     get_routing_manager,
     get_write_session,
     provide_read_session,
     provide_write_session,
+    rls_context,
 )
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "get_read_session",
     "provide_write_session",
     "provide_read_session",
+    "apply_rls_session_variables",
+    "rls_context",
 ]

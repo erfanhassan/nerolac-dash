@@ -60,6 +60,9 @@ APPROVED_PYTHON_DEPS = {
     "ruff",
     "mypy",
     "paramiko",
+    "pandera",
+    "pandas",
+    "eval_type_backport",
 }
 
 # Banned UI tokens & patterns (Strict Bright Light Corporate Mode)

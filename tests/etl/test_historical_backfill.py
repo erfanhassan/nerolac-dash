@@ -56,8 +56,7 @@ class TestSyntheticDataGeneration:
 
         # Check unique keys
         keys = {
-            (r.fiscal_year, r.fiscal_month, r.depot_id, r.gl_code, r.segment_code)
-            for r in records
+            (r.fiscal_year, r.fiscal_month, r.depot_id, r.gl_code, r.segment_code) for r in records
         }
         assert len(keys) == 1000
 
@@ -81,9 +80,7 @@ class TestHistoricalBackfillExecution:
         assert result.batches_processed == 0
         assert result.status == "COMPLETED"
 
-    async def test_small_batch_idempotent_upsert(
-        self, db_conn: asyncpg.Connection
-    ) -> None:
+    async def test_small_batch_idempotent_upsert(self, db_conn: asyncpg.Connection) -> None:
         worker = HistoricalSAPBackfillWorker(batch_size=10)
         batch_id = f"TEST_SMALL_{uuid.uuid4().hex[:8]}"
 
@@ -138,9 +135,7 @@ class TestHistoricalBackfillExecution:
             for i in range(15)
         ]
 
-        res2 = await worker.backfill_trial_balances(
-            updated_records, batch_id=f"{batch_id}_RERUN"
-        )
+        res2 = await worker.backfill_trial_balances(updated_records, batch_id=f"{batch_id}_RERUN")
         assert res2.total_rows == 15
 
         # Verify no duplicate rows were added
@@ -162,9 +157,7 @@ class TestHistoricalBackfillExecution:
         )
         assert float(val) == 9999.00
 
-    async def test_csv_file_backfill(
-        self, tmp_path: Path, db_conn: asyncpg.Connection
-    ) -> None:
+    async def test_csv_file_backfill(self, tmp_path: Path, db_conn: asyncpg.Connection) -> None:
         csv_file = tmp_path / "sap_tb_import.csv"
         rows = [
             {
@@ -202,9 +195,7 @@ class TestHistoricalBackfillExecution:
         )
         assert float(db_val) == 250000.50
 
-    async def test_fifty_thousand_performance_sla(
-        self, db_conn: asyncpg.Connection
-    ) -> None:
+    async def test_fifty_thousand_performance_sla(self, db_conn: asyncpg.Connection) -> None:
         """Assert 50,000 synthetic rows backfill completes in < 10 seconds."""
         # Generate 50,000 synthetic rows
         records = HistoricalSAPBackfillWorker.generate_synthetic_trial_balances(
@@ -225,9 +216,7 @@ class TestHistoricalBackfillExecution:
         assert res1.batches_processed == 10  # 50,000 / 5,000 = 10
         assert res1.duration_seconds < 10.0  # Must be strictly under 10 seconds!
 
-        db_count_1 = await db_conn.fetchval(
-            "SELECT count(*) FROM nerolac_ops.sap_trial_balances;"
-        )
+        db_count_1 = await db_conn.fetchval("SELECT count(*) FROM nerolac_ops.sap_trial_balances;")
         assert db_count_1 == 50000
 
         # 2. Re-run 50,000 rows (idempotency)
@@ -235,8 +224,6 @@ class TestHistoricalBackfillExecution:
         assert res2.total_rows == 50000
         assert res2.duration_seconds < 10.0
 
-        db_count_2 = await db_conn.fetchval(
-            "SELECT count(*) FROM nerolac_ops.sap_trial_balances;"
-        )
+        db_count_2 = await db_conn.fetchval("SELECT count(*) FROM nerolac_ops.sap_trial_balances;")
         # Assert zero duplicate rows created on re-run
         assert db_count_2 == 50000

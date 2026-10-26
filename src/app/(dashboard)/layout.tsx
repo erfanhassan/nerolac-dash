@@ -98,6 +98,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Finance Control Center
           </Link>
 
+          <Link
+            href="/hr"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderLeft: '3px solid #D32F2F',
+              color: '#0F172A',
+              fontWeight: 600,
+              fontSize: '13px',
+              textDecoration: 'none',
+              marginBottom: '4px',
+            }}
+          >
+            HR Workforce Intelligence
+          </Link>
+
           <div
             style={{
               padding: '8px 12px',

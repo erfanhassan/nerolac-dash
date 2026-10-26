@@ -94,9 +94,7 @@ async def run_backfill_test(
     )
     t_run1 = time.perf_counter() - t0_run1
 
-    db_count_run1: int = await conn.fetchval(
-        "SELECT count(*) FROM nerolac_ops.sap_trial_balances;"
-    )
+    db_count_run1: int = await conn.fetchval("SELECT count(*) FROM nerolac_ops.sap_trial_balances;")
 
     # Verify audit_log entry for Run 1
     audit_row_1 = await conn.fetchrow(
@@ -152,9 +150,7 @@ async def run_backfill_test(
     )
     t_run2 = time.perf_counter() - t0_run2
 
-    db_count_run2: int = await conn.fetchval(
-        "SELECT count(*) FROM nerolac_ops.sap_trial_balances;"
-    )
+    db_count_run2: int = await conn.fetchval("SELECT count(*) FROM nerolac_ops.sap_trial_balances;")
 
     # Verify audit_log entry for Run 2
     audit_row_2 = await conn.fetchrow(

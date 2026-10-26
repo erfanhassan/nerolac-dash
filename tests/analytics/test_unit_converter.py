@@ -45,9 +45,7 @@ class TestSAPUnitConverter:
         assert result.volume_liters == 1000.0
         assert result.mass_kg == 1420.0
 
-    def test_decorative_interior_washable_emulsion(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_decorative_interior_washable_emulsion(self, converter: SAPUnitConverter) -> None:
         """Verify Nerolac Beauty Gold Washable Interior Emulsion (density 1.36 kg/L)."""
         mass_kg = 2720.0
         result = converter.convert_kg_to_liters(mass_kg, "DEC_INT_BEAUTY_GOLD")
@@ -55,9 +53,7 @@ class TestSAPUnitConverter:
         assert result.density_applied_kg_per_l == 1.36
         assert result.output_value == 2000.0  # 2720 / 1.36 = 2000 Liters
 
-    def test_decorative_synthetic_gloss_enamel(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_decorative_synthetic_gloss_enamel(self, converter: SAPUnitConverter) -> None:
         """Verify Nerolac Synthetic Gloss Enamel Brilliant White (density 1.08 kg/L)."""
         mass_kg = 1080.0
         result = converter.convert_kg_to_liters(mass_kg, "DEC_SYN_GLOSS_ENAMEL")
@@ -66,9 +62,7 @@ class TestSAPUnitConverter:
         assert result.output_value == 1000.0  # 1080 / 1.08 = 1000 Liters
 
     # 2. Industrial Paint SKUs Conversion
-    def test_industrial_heavy_duty_epoxy_floor_coating(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_industrial_heavy_duty_epoxy_floor_coating(self, converter: SAPUnitConverter) -> None:
         """Verify Neropoxy High Build Floor Coating Grey (density 1.52 kg/L)."""
         mass_kg = 7600.0
         result = converter.convert_kg_to_liters(mass_kg, "IND_EPOXY_FLOOR_GR")
@@ -77,9 +71,7 @@ class TestSAPUnitConverter:
         assert result.density_applied_kg_per_l == 1.52
         assert result.output_value == 5000.0  # 7600 / 1.52 = 5000 Liters
 
-    def test_industrial_polyurethane_topcoat(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_industrial_polyurethane_topcoat(self, converter: SAPUnitConverter) -> None:
         """Verify Nerolac Polyurethane (PU) Two-Pack Topcoat (density 1.18 kg/L)."""
         mass_kg = 2360.0
         result = converter.convert_kg_to_liters(mass_kg, "IND_PU_TOPCOAT_WHITE")
@@ -87,9 +79,7 @@ class TestSAPUnitConverter:
         assert result.density_applied_kg_per_l == 1.18
         assert result.output_value == 2000.0  # 2360 / 1.18 = 2000 Liters
 
-    def test_industrial_general_pu_thinner(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_industrial_general_pu_thinner(self, converter: SAPUnitConverter) -> None:
         """Verify Nerolac Industrial General PU Thinner (density 0.84 kg/L)."""
         mass_kg = 840.0
         result = converter.convert_kg_to_liters(mass_kg, "IND_THINNER_PU")
@@ -107,9 +97,7 @@ class TestSAPUnitConverter:
         assert result.output_value == 1000.0
 
     # 3. Reverse Liter-to-KG Conversion
-    def test_liters_to_kg_reverse_conversion(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_liters_to_kg_reverse_conversion(self, converter: SAPUnitConverter) -> None:
         """Verify reverse conversion from sales volume (Liters) to production mass (KG)."""
         # 1000 L of Excel White -> 1420 KG
         res_dec = converter.convert_liters_to_kg(1000.0, "DEC_EXT_EXCEL_WHITE")
@@ -121,17 +109,11 @@ class TestSAPUnitConverter:
         assert res_ind.output_value == 760.0
 
     # 4. Temperature Compensation
-    def test_temperature_expansion_effect_on_density(
-        self, converter: SAPUnitConverter
-    ) -> None:
+    def test_temperature_expansion_effect_on_density(self, converter: SAPUnitConverter) -> None:
         """Verify volume expands at elevated summer plant temperatures (35°C vs 25°C)."""
         mass_kg = 1420.0
-        res_std = converter.convert_kg_to_liters(
-            mass_kg, "DEC_EXT_EXCEL_WHITE", temperature_c=25.0
-        )
-        res_hot = converter.convert_kg_to_liters(
-            mass_kg, "DEC_EXT_EXCEL_WHITE", temperature_c=35.0
-        )
+        res_std = converter.convert_kg_to_liters(mass_kg, "DEC_EXT_EXCEL_WHITE", temperature_c=25.0)
+        res_hot = converter.convert_kg_to_liters(mass_kg, "DEC_EXT_EXCEL_WHITE", temperature_c=35.0)
 
         # Higher temp -> lower density -> higher volume
         assert res_hot.density_applied_kg_per_l < res_std.density_applied_kg_per_l
@@ -180,9 +162,7 @@ class TestSAPUnitConverter:
 
     def test_extreme_temperature_rejected(self, converter: SAPUnitConverter) -> None:
         with pytest.raises(ValueError, match="outside operational bounds"):
-            converter.convert_kg_to_liters(
-                100.0, "DEC_EXT_EXCEL_WHITE", temperature_c=120.0
-            )
+            converter.convert_kg_to_liters(100.0, "DEC_EXT_EXCEL_WHITE", temperature_c=120.0)
 
 
 class TestBOMCostMapper:
@@ -208,9 +188,7 @@ class TestBOMCostMapper:
         actual_unit_cost = mapper.calculate_raw_material_unit_cost("RM_TIO2_RUTILE")
         assert actual_unit_cost == expected_tio2_bdt
 
-    def test_crude_oil_elasticity_on_resins_and_solvents(
-        self, mapper: BOMCostMapper
-    ) -> None:
+    def test_crude_oil_elasticity_on_resins_and_solvents(self, mapper: BOMCostMapper) -> None:
         """Verify resin and solvent price adjustments when Brent crude rises."""
         # Baseline crude is $75.00, current crude is $78.50 -> +4.667%
         # Resin has elasticity 0.55 -> price rises by ~2.567%
@@ -226,9 +204,7 @@ class TestBOMCostMapper:
         assert actual_mto == expected_mto
 
     # 2. Net Contribution Margin per SKU: Decorative Paint
-    def test_decorative_excel_mica_marble_contribution_margin(
-        self, mapper: BOMCostMapper
-    ) -> None:
+    def test_decorative_excel_mica_marble_contribution_margin(self, mapper: BOMCostMapper) -> None:
         """Verify contribution margin calculation for Excel Mica Marble Exterior White."""
         report = mapper.calculate_contribution_margin("DEC_EXT_EXCEL_WHITE")
 
@@ -252,9 +228,7 @@ class TestBOMCostMapper:
         assert report.contribution_margin_ratio_pct == expected_ratio
         assert 25.0 <= report.contribution_margin_ratio_pct <= 60.0  # Healthy margin
 
-    def test_decorative_synthetic_enamel_contribution_margin(
-        self, mapper: BOMCostMapper
-    ) -> None:
+    def test_decorative_synthetic_enamel_contribution_margin(self, mapper: BOMCostMapper) -> None:
         """Verify contribution margin for solvent-borne Synthetic Gloss Enamel."""
         report = mapper.calculate_contribution_margin("DEC_SYN_GLOSS_ENAMEL")
 
@@ -278,9 +252,7 @@ class TestBOMCostMapper:
         assert report.contribution_margin_bdt > 100.0
         assert report.contribution_margin_ratio_pct > 25.0
 
-    def test_industrial_polyurethane_white_contribution_margin(
-        self, mapper: BOMCostMapper
-    ) -> None:
+    def test_industrial_polyurethane_white_contribution_margin(self, mapper: BOMCostMapper) -> None:
         """Verify contribution margin for PU Two-Pack White."""
         report = mapper.calculate_contribution_margin("IND_PU_TOPCOAT_WHITE")
 
@@ -307,9 +279,7 @@ class TestBOMCostMapper:
         )
 
     # 5. Commodity Market Shock Sensitivity Simulation
-    def test_simulate_crude_and_tio2_commodity_shocks(
-        self, mapper: BOMCostMapper
-    ) -> None:
+    def test_simulate_crude_and_tio2_commodity_shocks(self, mapper: BOMCostMapper) -> None:
         """Verify commodity price shocks reduce contribution margin."""
         baseline_report = mapper.calculate_contribution_margin("DEC_EXT_EXCEL_WHITE")
 
@@ -322,13 +292,9 @@ class TestBOMCostMapper:
 
         # Cost should increase, margin should compress
         assert (
-            shocked_excel.total_bom_rm_cost_per_liter
-            > baseline_report.total_bom_rm_cost_per_liter
+            shocked_excel.total_bom_rm_cost_per_liter > baseline_report.total_bom_rm_cost_per_liter
         )
-        assert (
-            shocked_excel.contribution_margin_bdt
-            < baseline_report.contribution_margin_bdt
-        )
+        assert shocked_excel.contribution_margin_bdt < baseline_report.contribution_margin_bdt
         assert (
             shocked_excel.contribution_margin_ratio_pct
             < baseline_report.contribution_margin_ratio_pct

@@ -123,9 +123,7 @@ async def verify_schema() -> bool:
     vault = get_vault_client()
     creds = vault.get_database_credentials()
 
-    print(
-        f"Connecting to PostgreSQL 16 at {creds['host']}:{creds['port']}/{creds['database']}..."
-    )
+    print(f"Connecting to PostgreSQL 16 at {creds['host']}:{creds['port']}/{creds['database']}...")
     conn: asyncpg.Connection = await asyncpg.connect(
         host=creds["host"],
         port=int(creds["port"]),

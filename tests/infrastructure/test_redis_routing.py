@@ -226,7 +226,7 @@ class TestTokenBucketRateLimiter:
             # First 5 calls consume the 5 initial burst tokens
             for i in range(5):
                 decision = await limiter.check_rate_limit(client_id, cost=1)
-                assert decision.allowed is True, f"Request {i+1} should be allowed"
+                assert decision.allowed is True, f"Request {i + 1} should be allowed"
                 assert decision.remaining_tokens == 4 - i
 
             # 6th call must be denied immediately
@@ -340,15 +340,15 @@ class TestFastAPIRateLimiterMiddleware:
                 # 1. Exhaust allowed burst capacity (4 requests)
                 for i in range(burst_cap):
                     resp = await client.get("/api/v1/dashboard/pnl", headers=user_header)
-                    assert (
-                        resp.status_code == 200
-                    ), f"Request {i+1} failed with status {resp.status_code}"
+                    assert resp.status_code == 200, (
+                        f"Request {i + 1} failed with status {resp.status_code}"
+                    )
 
                 # 2. 5th request must be rejected with HTTP 429 Too Many Requests
                 throttled_resp = await client.get("/api/v1/dashboard/pnl", headers=user_header)
-                assert (
-                    throttled_resp.status_code == 429
-                ), f"Expected HTTP 429, got {throttled_resp.status_code}"
+                assert throttled_resp.status_code == 429, (
+                    f"Expected HTTP 429, got {throttled_resp.status_code}"
+                )
 
                 # 3. Assert RFC-compliant telemetry headers
                 assert "Retry-After" in throttled_resp.headers

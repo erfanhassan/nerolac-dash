@@ -61,97 +61,113 @@ class TestFinancialActualsValidation:
 
     def test_gl_code_boundary_limits(self) -> None:
         # 10000 (min boundary) - must pass
-        min_record = FinancialActualsSchema.model_validate({
-            "gl_code": "10000",
-            "fiscal_year": 2026,
-            "fiscal_month": 1,
-            "segment_code": "INDUSTRIAL",
-            "amount": 1000.0,
-        })
+        min_record = FinancialActualsSchema.model_validate(
+            {
+                "gl_code": "10000",
+                "fiscal_year": 2026,
+                "fiscal_month": 1,
+                "segment_code": "INDUSTRIAL",
+                "amount": 1000.0,
+            }
+        )
         assert min_record.gl_code == 10000
 
         # 10017 (max boundary) - must pass
-        max_record = FinancialActualsSchema.model_validate({
-            "gl_code": 10017,
-            "fiscal_year": 2026,
-            "fiscal_month": 12,
-            "segment_code": "AUTO",
-            "amount": 5000.0,
-        })
+        max_record = FinancialActualsSchema.model_validate(
+            {
+                "gl_code": 10017,
+                "fiscal_year": 2026,
+                "fiscal_month": 12,
+                "segment_code": "AUTO",
+                "amount": 5000.0,
+            }
+        )
         assert max_record.gl_code == 10017
 
         # 9999 (below min boundary) - must fail
         with pytest.raises(ValidationError) as exc_info:
-            FinancialActualsSchema.model_validate({
-                "gl_code": 9999,
-                "fiscal_year": 2026,
-                "fiscal_month": 1,
-                "segment_code": "COATINGS",
-                "amount": 100.0,
-            })
+            FinancialActualsSchema.model_validate(
+                {
+                    "gl_code": 9999,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 1,
+                    "segment_code": "COATINGS",
+                    "amount": 100.0,
+                }
+            )
         assert "outside authorized SAP Chart of Accounts range" in str(exc_info.value)
 
         # 10018 (above max boundary) - must fail
         with pytest.raises(ValidationError) as exc_info:
-            FinancialActualsSchema.model_validate({
-                "gl_code": 10018,
-                "fiscal_year": 2026,
-                "fiscal_month": 1,
-                "segment_code": "COATINGS",
-                "amount": 100.0,
-            })
+            FinancialActualsSchema.model_validate(
+                {
+                    "gl_code": 10018,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 1,
+                    "segment_code": "COATINGS",
+                    "amount": 100.0,
+                }
+            )
         assert "outside authorized SAP Chart of Accounts range" in str(exc_info.value)
 
     def test_fiscal_month_validation(self) -> None:
         # Month 13 is invalid
         with pytest.raises(ValidationError) as exc_info:
-            FinancialActualsSchema.model_validate({
-                "gl_code": 10001,
-                "fiscal_year": 2026,
-                "fiscal_month": 13,
-                "segment_code": "DECORATIVE",
-                "amount": 100.0,
-            })
+            FinancialActualsSchema.model_validate(
+                {
+                    "gl_code": 10001,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 13,
+                    "segment_code": "DECORATIVE",
+                    "amount": 100.0,
+                }
+            )
         assert "Must be between 1 and 12" in str(exc_info.value)
 
         # Month 0 is invalid
         with pytest.raises(ValidationError):
-            FinancialActualsSchema.model_validate({
-                "gl_code": 10001,
-                "fiscal_year": 2026,
-                "fiscal_month": 0,
-                "segment_code": "DECORATIVE",
-                "amount": 100.0,
-            })
+            FinancialActualsSchema.model_validate(
+                {
+                    "gl_code": 10001,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 0,
+                    "segment_code": "DECORATIVE",
+                    "amount": 100.0,
+                }
+            )
 
     def test_segment_code_cannot_be_empty(self) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            FinancialActualsSchema.model_validate({
-                "gl_code": 10002,
-                "fiscal_year": 2026,
-                "fiscal_month": 5,
-                "segment_code": "   ",
-                "amount": 500.0,
-            })
+            FinancialActualsSchema.model_validate(
+                {
+                    "gl_code": 10002,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 5,
+                    "segment_code": "   ",
+                    "amount": 500.0,
+                }
+            )
         assert "Segment code cannot be empty" in str(exc_info.value)
 
     def test_pandera_financial_actuals_dataframe(self) -> None:
-        valid_df = pd.DataFrame([
-            {
-                "gl_code": 10000,
-                "fiscal_year": 2026,
-                "fiscal_month": 1,
-                "segment_code": "DEC",
-                "amount": 1000.0,
-            },
-            {
-                "gl_code": 10017,
-                "fiscal_year": 2026,
-                "fiscal_month": 12,
-                "segment_code": "IND",
-                "amount": 2500.0,
-            },
-        ])
+        valid_df = pd.DataFrame(
+            [
+                {
+                    "gl_code": 10000,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 1,
+                    "segment_code": "DEC",
+                    "amount": 1000.0,
+                },
+                {
+                    "gl_code": 10017,
+                    "fiscal_year": 2026,
+                    "fiscal_month": 12,
+                    "segment_code": "IND",
+                    "amount": 2500.0,
+                },
+            ]
+        )
         validated_df = financial_actuals_pandera_schema.validate(valid_df)
         assert len(validated_df) == 2
 
@@ -176,50 +192,65 @@ class TestHistoricalSalesValidation:
 
     def test_negative_liters_rejected(self) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            HistoricalSalesSchema.model_validate({
-                "sales_date": "2026-03-20",
-                "depot_id": "DEPOT_01",
-                "sku_code": "SKU_01",
-                "liters": -10.0,
-                "net_revenue": 500.0,
-            })
+            HistoricalSalesSchema.model_validate(
+                {
+                    "sales_date": "2026-03-20",
+                    "depot_id": "DEPOT_01",
+                    "sku_code": "SKU_01",
+                    "liters": -10.0,
+                    "net_revenue": 500.0,
+                }
+            )
         assert "Liters cannot be negative" in str(exc_info.value)
 
     def test_negative_net_revenue_rejected(self) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            HistoricalSalesSchema.model_validate({
-                "sales_date": "2026-03-20",
-                "depot_id": "DEPOT_01",
-                "sku_code": "SKU_01",
-                "liters": 10.0,
-                "net_revenue": -150.0,
-            })
+            HistoricalSalesSchema.model_validate(
+                {
+                    "sales_date": "2026-03-20",
+                    "depot_id": "DEPOT_01",
+                    "sku_code": "SKU_01",
+                    "liters": 10.0,
+                    "net_revenue": -150.0,
+                }
+            )
         assert "Net revenue in BDT cannot be negative" in str(exc_info.value)
 
     def test_empty_depot_or_sku_rejected(self) -> None:
         with pytest.raises(ValidationError):
-            HistoricalSalesSchema.model_validate({
-                "sales_date": "2026-03-20",
-                "depot_id": "",
-                "sku_code": "SKU_01",
-                "liters": 10.0,
-                "net_revenue": 100.0,
-            })
+            HistoricalSalesSchema.model_validate(
+                {
+                    "sales_date": "2026-03-20",
+                    "depot_id": "",
+                    "sku_code": "SKU_01",
+                    "liters": 10.0,
+                    "net_revenue": 100.0,
+                }
+            )
 
         with pytest.raises(ValidationError):
-            HistoricalSalesSchema.model_validate({
-                "sales_date": "2026-03-20",
-                "depot_id": "DEPOT_01",
-                "sku_code": "   ",
-                "liters": 10.0,
-                "net_revenue": 100.0,
-            })
+            HistoricalSalesSchema.model_validate(
+                {
+                    "sales_date": "2026-03-20",
+                    "depot_id": "DEPOT_01",
+                    "sku_code": "   ",
+                    "liters": 10.0,
+                    "net_revenue": 100.0,
+                }
+            )
 
     def test_pandera_historical_sales_dataframe(self) -> None:
-        df = pd.DataFrame([
-            {"depot_id": "DEPOT_01", "sku_code": "SKU_A", "liters": 100.0, "net_revenue": 20000.0},
-            {"depot_id": "DEPOT_02", "sku_code": "SKU_B", "liters": 0.0, "net_revenue": 0.0},
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "depot_id": "DEPOT_01",
+                    "sku_code": "SKU_A",
+                    "liters": 100.0,
+                    "net_revenue": 20000.0,
+                },
+                {"depot_id": "DEPOT_02", "sku_code": "SKU_B", "liters": 0.0, "net_revenue": 0.0},
+            ]
+        )
         validated_df = historical_sales_pandera_schema.validate(df)
         assert len(validated_df) == 2
 
@@ -246,51 +277,59 @@ class TestProcurementValidation:
     def test_non_positive_unit_price_rejected(self) -> None:
         # Zero unit price
         with pytest.raises(ValidationError) as exc_info:
-            ProcurementSchema.model_validate({
-                "po_date": "2026-03-10",
-                "vendor_name": "SUPPLIER_01",
-                "material_code": "MAT_01",
-                "unit_price": 0.0,
-                "quantity": 100.0,
-            })
+            ProcurementSchema.model_validate(
+                {
+                    "po_date": "2026-03-10",
+                    "vendor_name": "SUPPLIER_01",
+                    "material_code": "MAT_01",
+                    "unit_price": 0.0,
+                    "quantity": 100.0,
+                }
+            )
         assert "must be strictly positive" in str(exc_info.value)
 
         # Negative unit price
         with pytest.raises(ValidationError):
-            ProcurementSchema.model_validate({
-                "po_date": "2026-03-10",
-                "vendor_name": "SUPPLIER_01",
-                "material_code": "MAT_01",
-                "unit_price": -50.0,
-                "quantity": 100.0,
-            })
+            ProcurementSchema.model_validate(
+                {
+                    "po_date": "2026-03-10",
+                    "vendor_name": "SUPPLIER_01",
+                    "material_code": "MAT_01",
+                    "unit_price": -50.0,
+                    "quantity": 100.0,
+                }
+            )
 
     def test_non_positive_quantity_rejected(self) -> None:
         with pytest.raises(ValidationError) as exc_info:
-            ProcurementSchema.model_validate({
-                "po_date": "2026-03-10",
-                "vendor_name": "SUPPLIER_01",
-                "material_code": "MAT_01",
-                "unit_price": 10.0,
-                "quantity": 0.0,
-            })
+            ProcurementSchema.model_validate(
+                {
+                    "po_date": "2026-03-10",
+                    "vendor_name": "SUPPLIER_01",
+                    "material_code": "MAT_01",
+                    "unit_price": 10.0,
+                    "quantity": 0.0,
+                }
+            )
         assert "must be strictly positive" in str(exc_info.value)
 
     def test_pandera_procurement_dataframe(self) -> None:
-        df = pd.DataFrame([
-            {
-                "vendor_name": "VEND_1",
-                "material_code": "MAT_1",
-                "unit_price": 50.0,
-                "quantity": 10.0,
-            },
-            {
-                "vendor_name": "VEND_2",
-                "material_code": "MAT_2",
-                "unit_price": 100.0,
-                "quantity": 5.0,
-            },
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "vendor_name": "VEND_1",
+                    "material_code": "MAT_1",
+                    "unit_price": 50.0,
+                    "quantity": 10.0,
+                },
+                {
+                    "vendor_name": "VEND_2",
+                    "material_code": "MAT_2",
+                    "unit_price": 100.0,
+                    "quantity": 5.0,
+                },
+            ]
+        )
         validated_df = procurement_pandera_schema.validate(df)
         assert len(validated_df) == 2
 

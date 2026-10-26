@@ -249,8 +249,7 @@ class TestSalesMaskingAndRevenueIntegrity:
 
         # Verify flagged rows
         depot1_excel = masked_df[
-            (masked_df["depot_id"] == "DEPOT_01")
-            & (masked_df["sku_id"] == "DEC_EXT_EXCEL_WHITE")
+            (masked_df["depot_id"] == "DEPOT_01") & (masked_df["sku_id"] == "DEC_EXT_EXCEL_WHITE")
         ]
         flagged_days = depot1_excel[depot1_excel["is_stockout_flag"] == True]  # noqa: E712
         assert len(flagged_days) == 2

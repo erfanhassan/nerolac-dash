@@ -1,10 +1,9 @@
-"""Finance Control Center Pydantic API schemas."""
+"""Pydantic API schemas for Nerolac Dashboard modules."""
 
 from src.backend.api.v1.schemas.finance_schemas import (
     AgingBucketSummary,
     AgingEntityRecord,
     ARAPAgingResponse,
-    CashflowMonthlyProjection,
     CashflowSimulationRequest,
     CashflowSimulationResponse,
     PnLTreeGridNode,
@@ -13,17 +12,38 @@ from src.backend.api.v1.schemas.finance_schemas import (
     SupplierVarianceResponse,
     WaterfallDataPoint,
 )
+from src.backend.api.v1.schemas.hr_schemas import (
+    CTCScatterPlotResponse,
+    CTCScatterPoint,
+    EmployeeScorecard,
+    KPIScoreBreakdown,
+    KPIScorecardResponse,
+    ManpowerCapacityResponse,
+    QuadrantSummary,
+    RadarAxisIndicator,
+    VacantTerritoryModel,
+)
 
 __all__ = [
+    # Finance
     "WaterfallDataPoint",
     "PnLTreeGridNode",
     "SegmentPnLResponse",
     "SupplierPurchaseRecord",
     "SupplierVarianceResponse",
     "CashflowSimulationRequest",
-    "CashflowMonthlyProjection",
     "CashflowSimulationResponse",
     "AgingBucketSummary",
     "AgingEntityRecord",
     "ARAPAgingResponse",
+    # HR
+    "VacantTerritoryModel",
+    "ManpowerCapacityResponse",
+    "KPIScoreBreakdown",
+    "RadarAxisIndicator",
+    "EmployeeScorecard",
+    "KPIScorecardResponse",
+    "CTCScatterPoint",
+    "QuadrantSummary",
+    "CTCScatterPlotResponse",
 ]

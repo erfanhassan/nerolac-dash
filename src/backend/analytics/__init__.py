@@ -15,6 +15,10 @@ from src.backend.analytics.bom_cost_mapper import (
     RawMaterial,
     RawMaterialCategory,
 )
+from src.backend.analytics.daily_reconciliation import (
+    DailyReconciliationEngine,
+    get_daily_reconciler,
+)
 from src.backend.analytics.stockout_masker import (
     NEROLAC_DEPOTS,
     RevenueIntegrityViolationError,
@@ -46,4 +50,6 @@ __all__ = [
     "StockoutMaskingReport",
     "NEROLAC_DEPOTS",
     "RevenueIntegrityViolationError",
+    "DailyReconciliationEngine",
+    "get_daily_reconciler",
 ]

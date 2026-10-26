@@ -139,17 +139,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Supply Chain (SCM & MRP)
           </Link>
 
-          <div
+          <Link
+            id="nav-whatsapp"
+            href="/whatsapp"
             style={{
+              display: 'flex',
+              alignItems: 'center',
               padding: '8px 12px',
-              color: '#64748B',
+              borderRadius: '4px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderLeft: '3px solid #D32F2F',
+              color: '#0F172A',
+              fontWeight: 600,
               fontSize: '13px',
+              textDecoration: 'none',
               marginBottom: '4px',
-              cursor: 'not-allowed',
             }}
           >
-            Sales & Field Operations
-          </div>
+            WhatsApp Recon (Module 4)
+          </Link>
         </nav>
 
         {/* Footer info */}

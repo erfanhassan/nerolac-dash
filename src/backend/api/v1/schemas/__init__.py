@@ -29,6 +29,18 @@ from src.backend.api.v1.schemas.supply_chain_schemas import (
     MRPProposalsResponse,
     TimeSeriesDataPoint,
 )
+from src.backend.api.v1.schemas.whatsapp_schemas import (
+    DailyReconciliationResponse,
+    DepotReconSummary,
+    MetaWebhookPayload,
+    ParsedCollectionItem,
+    ParsedSKULineItem,
+    ReconciliationExceptionItem,
+    ResolvedDealerItem,
+    WebhookIngestResponse,
+    WhatsAppMessageFeedResponse,
+    WhatsAppMessageRecord,
+)
 
 __all__ = [
     # Finance
@@ -57,4 +69,15 @@ __all__ = [
     "DemandForecastResponse",
     "MRPProposalItem",
     "MRPProposalsResponse",
+    # WhatsApp & Recon
+    "MetaWebhookPayload",
+    "WebhookIngestResponse",
+    "ParsedSKULineItem",
+    "ParsedCollectionItem",
+    "ResolvedDealerItem",
+    "WhatsAppMessageRecord",
+    "WhatsAppMessageFeedResponse",
+    "ReconciliationExceptionItem",
+    "DepotReconSummary",
+    "DailyReconciliationResponse",
 ]

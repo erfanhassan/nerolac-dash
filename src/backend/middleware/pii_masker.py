@@ -166,15 +166,50 @@ class PIIMaskingMiddleware:
             await self.app(scope, receive, send)
             return
 
+        response_start: dict[str, Any] | None = None
+        body_parts: list[bytes] = []
+
         async def send_wrapper(message: dict[str, Any]) -> None:
+            nonlocal response_start
+            if message["type"] == "http.response.start":
+                response_start = message
+                return
+
             if message["type"] == "http.response.body":
                 body = message.get("body", b"")
+                more_body = message.get("more_body", False)
+                body_parts.append(body)
+
+                if more_body:
+                    return
+
+                # All body chunks collected, process now
+                full_body = b"".join(body_parts)
                 try:
-                    text_body = body.decode("utf-8")
+                    text_body = full_body.decode("utf-8")
                     masked_text = mask_pii(text_body)
-                    message["body"] = masked_text.encode("utf-8")
+                    final_body = masked_text.encode("utf-8")
                 except UnicodeDecodeError:
-                    pass
+                    final_body = full_body
+
+                if response_start is not None:
+                    # Update Content-Length header to match the new body length
+                    headers: list[tuple[bytes, bytes]] = []
+                    for name, value in response_start.get("headers", []):
+                        if name.lower() == b"content-length":
+                            continue
+                        headers.append((name, value))
+                    headers.append((b"content-length", str(len(final_body)).encode("latin-1")))
+                    response_start["headers"] = headers
+                    await send(response_start)
+
+                await send({
+                    "type": "http.response.body",
+                    "body": final_body,
+                    "more_body": False,
+                })
+                return
+
             await send(message)
 
         await self.app(scope, receive, send_wrapper)

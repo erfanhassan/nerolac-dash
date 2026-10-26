@@ -65,6 +65,9 @@ APPROVED_PYTHON_DEPS = {
     "eval_type_backport",
     "lightgbm",
     "prophet",
+    "rapidfuzz",
+    "celery",
+    "pgvector",
 }
 
 # Banned UI tokens & patterns (Strict Bright Light Corporate Mode)

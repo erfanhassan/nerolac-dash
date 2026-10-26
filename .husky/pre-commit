@@ -25,24 +25,36 @@ else
   MYPY="python3 -m mypy"
 fi
 
+if [ -f ".venv/bin/pytest" ]; then
+  PYTEST=".venv/bin/pytest"
+elif command -v pytest >/dev/null 2>&1; then
+  PYTEST="pytest"
+else
+  PYTEST="python3 -m pytest"
+fi
+
 # 1. Python Linting with Ruff
-echo "--> [1/5] Running Ruff (Python linter)..."
+echo "--> [1/6] Running Ruff (Python linter)..."
 $RUFF check .
 
 # 2. Static Type Checking with mypy
-echo "--> [2/5] Running mypy (Static type checking)..."
-$MYPY scripts/verify_agent_compliance.py
+echo "--> [2/6] Running mypy (Static type checking)..."
+$MYPY src tests scripts/verify_agent_compliance.py
 
-# 3. Frontend Linting with ESLint
-echo "--> [3/5] Running ESLint..."
+# 3. Unit and Security Test Suites with pytest
+echo "--> [3/6] Running pytest test suites..."
+$PYTEST tests/backend/ -q
+
+# 4. Frontend Linting with ESLint
+echo "--> [4/6] Running ESLint..."
 npx eslint .
 
-# 4. Code Formatting with Prettier
-echo "--> [4/5] Running Prettier..."
+# 5. Code Formatting with Prettier
+echo "--> [5/6] Running Prettier..."
 npx prettier --check .
 
-# 5. Agent Compliance and AST Guardrails
-echo "--> [5/5] Running Agent Compliance & AST Guardrails..."
+# 6. Agent Compliance and AST Guardrails
+echo "--> [6/6] Running Agent Compliance & AST Guardrails..."
 python3 scripts/verify_agent_compliance.py
 
 echo "========================================================"

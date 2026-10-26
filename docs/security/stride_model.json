@@ -1,0 +1,362 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "model_metadata": {
+    "system_name": "Nerolac Operations Dashboard",
+    "version": "1.0.0",
+    "classification": "CONFIDENTIAL - RESTRICTED",
+    "framework": "Microsoft STRIDE Threat Modeling Methodology",
+    "jurisdiction": "Bangladesh (ICT Act, Cybersecurity Act, Sovereign Data Residency)",
+    "last_reviewed": "2026-10-27T01:30:00Z",
+    "mandatory_architecture": "Next.js 15 App Router (TypeScript, RSC) + FastAPI (Async ASGI) + PostgreSQL 16 + Redis 7"
+  },
+  "trust_boundaries": [
+    {
+      "boundary_id": "TB-01-SAP-SFTP",
+      "name": "SAP SFTP Ingress Boundary",
+      "description": "Ingress interface for automated file transfers of ERP batch runs, manufacturing plant volumes, and delivery dispatches from SAP on-premise servers.",
+      "protocol": "SFTP (SSH File Transfer Protocol) over TLS/SSH Port 22",
+      "source_network": "SAP ERP Plant Network (On-Premises)",
+      "destination_network": "Nerolac Cloud Ingestion Gateway (DMZ)"
+    },
+    {
+      "boundary_id": "TB-02-WHATSAPP",
+      "name": "Meta WhatsApp Webhook Boundary",
+      "description": "Ingress callback interface handling real-time dealer inquiries, automated dispatch confirmations, and field agent communications.",
+      "protocol": "HTTPS POST over TLS 1.3 with X-Hub-Signature-256",
+      "source_network": "Meta Cloud / WhatsApp Business API",
+      "destination_network": "FastAPI Webhook Handler Gateway"
+    },
+    {
+      "boundary_id": "TB-03-REST-API",
+      "name": "Enterprise REST API Boundary",
+      "description": "Internal and client-facing asynchronous ASGI endpoints serving Next.js 15 React Server Components, authenticated operational portals, and metrics visualizers.",
+      "protocol": "HTTPS REST over TLS 1.3 with JWT Bearer Authentication & RBAC",
+      "source_network": "Enterprise Browser Clients / Next.js Server Components",
+      "destination_network": "FastAPI Async Application Tier"
+    }
+  ],
+  "threat_analysis": [
+    {
+      "threat_id": "THREAT-SFTP-S01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Spoofing",
+      "title": "Rogue SFTP Client Impersonation",
+      "description": "An adversary impersonates the SAP production facility server to inject fraudulent plant output batches or manipulate inventory numbers.",
+      "threat_vector": "Stolen credentials, brute-forced weak passwords, or compromised SSH keys.",
+      "impacted_attributes": ["Authentication", "Integrity"],
+      "severity": "HIGH",
+      "cvss_score": 7.8,
+      "mitigation_controls": [
+        "Enforce Ed25519 asymmetric SSH key authentication with keys managed exclusively via HashiCorp Vault.",
+        "Disable password authentication completely on the SFTP server.",
+        "Enforce IP whitelisting restricted strictly to authorized factory gateways in Bangladesh.",
+        "Automate SSH key rotation every 30 days via Vault dynamic secrets."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Audit log streaming of all SSH connection attempts to SIEM with geo-IP anomaly alerting."
+    },
+    {
+      "threat_id": "THREAT-SFTP-T01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Tampering",
+      "title": "Batch Ingestion File Manipulation & Malicious Payloads",
+      "description": "An attacker alters CSV/XML manufacturing manifests in transit or replaces batches with poisoned inventory data.",
+      "threat_vector": "Man-in-the-Middle (MitM) or unauthorized write access to SFTP drop directories.",
+      "impacted_attributes": ["Integrity"],
+      "severity": "CRITICAL",
+      "cvss_score": 8.5,
+      "mitigation_controls": [
+        "Cryptographic SHA-256 checksum validation for every batch file accompanied by GPG digital signatures.",
+        "Pydantic strict schema parsing and sanitization before staging into PostgreSQL 16.",
+        "Files processed in transient memory; raw files moved to encrypted WORM (Write Once, Read Many) cold storage."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Hash mismatch alarms and immediate pipeline freeze upon corrupted batch checksum."
+    },
+    {
+      "threat_id": "THREAT-SFTP-R01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Repudiation",
+      "title": "Denial of Factory Batch Dispatch",
+      "description": "A plant dispatcher or logistics vendor denies having generated or uploaded an errant production manifest.",
+      "threat_vector": "Absence of non-repudiation audit logs on SFTP ingestion.",
+      "impacted_attributes": ["Non-Repudiation"],
+      "severity": "MEDIUM",
+      "cvss_score": 5.4,
+      "mitigation_controls": [
+        "Immutable append-only audit trail in PostgreSQL 16 logging file SHA-256, byte size, client IP, timestamp, and SSH fingerprint.",
+        "Automated cryptographic receipt returned to SAP ERP upon successful batch validation."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Daily reconciliation reports matched between SAP ERP logs and Nerolac Dash audit tables."
+    },
+    {
+      "threat_id": "THREAT-SFTP-I01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Information Disclosure",
+      "title": "Exposure of Proprietary Paint Formulas & Volume Pricing",
+      "description": "Industrial competitors gain unauthorized access to paint formulation codes, factory capacity, or batch costs stored in transit files.",
+      "threat_vector": "Unencrypted file staging directories, insecure permission bits (777), or leaked SFTP backup folders.",
+      "impacted_attributes": ["Confidentiality"],
+      "severity": "CRITICAL",
+      "cvss_score": 8.7,
+      "mitigation_controls": [
+        "End-to-end file encryption at rest using AES-256-GCM with keys managed by HashiCorp Vault.",
+        "Strict POSIX permissions (0600) on all incoming staging directories.",
+        "Automated purging of local staging files immediately after ingestion into PostgreSQL 16."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Vault access audit logs alerting on any unauthorized secret read."
+    },
+    {
+      "threat_id": "THREAT-SFTP-D01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Denial of Service",
+      "title": "Disk Exhaustion & Ingestion Pipeline Starvation",
+      "description": "Excessive or oversized file uploads exhaust local storage or compute resources, halting plant operational feeds.",
+      "threat_vector": "Upload of multi-gigabyte decompression bombs or high-frequency automated file dumps.",
+      "impacted_attributes": ["Availability"],
+      "severity": "HIGH",
+      "cvss_score": 7.3,
+      "mitigation_controls": [
+        "Hard quota limit of 25MB per batch file enforced at SFTP daemon layer.",
+        "Redis-backed token bucket rate limiter restricting uploads to max 10 files per minute per plant.",
+        "Isolated ephemeral disk volume with auto-scaling alerts at 75% capacity."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Real-time Prometheus disk space and ingestion queue length monitoring."
+    },
+    {
+      "threat_id": "THREAT-SFTP-E01",
+      "boundary_id": "TB-01-SAP-SFTP",
+      "stride_category": "Elevation of Privilege",
+      "title": "SFTP Chroot Jail Escape",
+      "description": "An attacker exploits vulnerabilities in the SFTP server to gain interactive shell access on the underlying Linux host.",
+      "threat_vector": "SSH daemon vulnerabilities, weak chroot isolation, or symlink traversal.",
+      "impacted_attributes": ["Integrity", "Confidentiality", "Availability"],
+      "severity": "CRITICAL",
+      "cvss_score": 9.1,
+      "mitigation_controls": [
+        "Strict internal-sftp chroot jail configuration with ForceCommand internal-sftp and PermitTTY no.",
+        "Containerized unprivileged Docker container running as non-root user with read-only root filesystem.",
+        "AppArmor / SELinux mandatory access controls restricting kernel system calls."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Host auditd rules triggering alerts on any shell execution or forbidden syscall attempt."
+    },
+    {
+      "threat_id": "THREAT-WA-S01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Spoofing",
+      "title": "Forged WhatsApp Webhook Invocations",
+      "description": "Malicious actors craft synthetic HTTP requests to the webhook URL pretending to be Meta servers confirming fake paint orders.",
+      "threat_vector": "Unauthenticated HTTP POST requests targeting the public webhook endpoint.",
+      "impacted_attributes": ["Authentication", "Integrity"],
+      "severity": "CRITICAL",
+      "cvss_score": 8.9,
+      "mitigation_controls": [
+        "Cryptographic HMAC SHA-256 signature verification validating the X-Hub-Signature-256 header against the app secret stored in HashiCorp Vault.",
+        "Reject requests with missing, invalid, or expired signatures immediately with HTTP 401.",
+        "Verify challenge tokens during webhook registration handshake with Vault verify tokens."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Security logs recording all failed signature verifications with source IP tracking."
+    },
+    {
+      "threat_id": "THREAT-WA-T01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Tampering",
+      "title": "Replay Attacks on Order Confirmation Webhooks",
+      "description": "An attacker intercepts and replays valid WhatsApp order confirmation messages to duplicate inventory deductions.",
+      "threat_vector": "HTTP payload replay without timestamp or nonce validation.",
+      "impacted_attributes": ["Integrity"],
+      "severity": "HIGH",
+      "cvss_score": 7.5,
+      "mitigation_controls": [
+        "Redis 7 distributed idempotency cache storing message IDs with a 24-hour TTL.",
+        "Verify WhatsApp message timestamp is within 300 seconds of current UTC time.",
+        "Idempotent database upsert transactions in PostgreSQL 16."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Duplicate message ID metrics incremented and monitored on Grafana dashboards."
+    },
+    {
+      "threat_id": "THREAT-WA-R01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Repudiation",
+      "title": "Dealer Disputing WhatsApp Order or Dispatch Acceptance",
+      "description": "A dealer claims they never placed an order or acknowledged dispatch receipt via WhatsApp.",
+      "threat_vector": "Incomplete conversational audit trail or lack of non-repudiation records.",
+      "impacted_attributes": ["Non-Repudiation"],
+      "severity": "MEDIUM",
+      "cvss_score": 6.1,
+      "mitigation_controls": [
+        "Store complete cryptographic WhatsApp message audit records including Meta message ID, sender WABA ID, timestamp, and payload hash.",
+        "Maintain dealer phone number to verified dealer ID mapping in PostgreSQL 16."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Permanent message audit ledger preserved for 7 years per Bangladesh corporate guidelines."
+    },
+    {
+      "threat_id": "THREAT-WA-I01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Information Disclosure",
+      "title": "PII Leakage in Customer & Dealer Chat Logs",
+      "description": "Bangladeshi phone numbers (+880...), National ID numbers (NID), or bank account figures are logged or sent to LLM context windows.",
+      "threat_vector": "Application logging, crash tracebacks, or unredacted LLM inference queries.",
+      "impacted_attributes": ["Confidentiality"],
+      "severity": "HIGH",
+      "cvss_score": 8.1,
+      "mitigation_controls": [
+        "Mandatory PIIMaskingMiddleware and PIIRedactingFormatter in src/backend/middleware/pii_masker.py.",
+        "Regex-based automatic scrubbing of all Bangladeshi phone numbers, NID formats, and bank figures before writing to logs or LLM context.",
+        "Strict enforcement of Bangladesh Data Sovereignty in src/backend/config/settings.py."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Automated log auditing and regex compliance test assertions in CI/CD pipelines."
+    },
+    {
+      "threat_id": "THREAT-WA-D01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Denial of Service",
+      "title": "Webhook Flooding & Async ASGI Worker Starvation",
+      "description": "High volume of webhook requests overwhelms FastAPI ASGI workers or exhausts database connection pools.",
+      "threat_vector": "Distributed DoS or bot spam targeting the public webhook URL.",
+      "impacted_attributes": ["Availability"],
+      "severity": "HIGH",
+      "cvss_score": 7.6,
+      "mitigation_controls": [
+        "Asynchronous webhook ingestion: return HTTP 200 immediately after HMAC validation and queue processing in Redis 7.",
+        "Cloudflare WAF / Cloud DDoS protection with rate-limiting at 100 req/sec per IP.",
+        "Connection pool caps on PostgreSQL 16 with asyncpg pooling."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "ASGI event loop latency alerts and Redis queue backlog depth metrics."
+    },
+    {
+      "threat_id": "THREAT-WA-E01",
+      "boundary_id": "TB-02-WHATSAPP",
+      "stride_category": "Elevation of Privilege",
+      "title": "Unauthenticated Command Execution via Chatbot Prompt Injection",
+      "description": "An attacker uses crafted prompts in WhatsApp messages to override system prompts and execute administrative actions in the backend.",
+      "threat_vector": "Prompt injection targeting the downstream LLM processing pipeline.",
+      "impacted_attributes": ["Integrity", "Authorization"],
+      "severity": "HIGH",
+      "cvss_score": 8.0,
+      "mitigation_controls": [
+        "Strict separation between user input and system instructions via structured Pydantic tool parameters.",
+        "Deterministic rule-based intent routing before LLM invocation.",
+        "Administrative actions strictly blocked from WhatsApp channel regardless of prompt output."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Anomaly detection on unexpected LLM tool calls with immediate session termination."
+    },
+    {
+      "threat_id": "THREAT-API-S01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Spoofing",
+      "title": "JWT Token Forgery or Tampering",
+      "description": "An attacker generates arbitrary JWT tokens using weak signing algorithms or compromised keys to access dealer accounts.",
+      "threat_vector": "JWT alg=none vulnerability, weak HMAC secrets, or leaked private keys.",
+      "impacted_attributes": ["Authentication", "Integrity"],
+      "severity": "CRITICAL",
+      "cvss_score": 9.2,
+      "mitigation_controls": [
+        "Enforce RS256 / EdDSA asymmetric token signing with keys stored exclusively in HashiCorp Vault.",
+        "Explicit validation rejecting 'none' algorithm and enforcing strict token expiration (max 15 mins for access tokens).",
+        "Redis-backed token revocation blacklist for immediate session invalidation."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Alerting on any JWT verification failure with invalid algorithm header."
+    },
+    {
+      "threat_id": "THREAT-API-T01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Tampering",
+      "title": "Cross-Site Request Forgery (CSRF) & State Manipulation",
+      "description": "An attacker tricks an authenticated dashboard user's browser into executing state-changing transactions.",
+      "threat_vector": "Unauthorized cross-origin requests.",
+      "impacted_attributes": ["Integrity"],
+      "severity": "HIGH",
+      "cvss_score": 7.4,
+      "mitigation_controls": [
+        "Enforce SameSite=Strict on all authentication cookies.",
+        "Strict CORS origin policy allowing only verified internal Nerolac domains.",
+        "State-changing endpoints require explicit anti-CSRF custom headers."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "WAF blocked cross-origin request metrics."
+    },
+    {
+      "threat_id": "THREAT-API-R01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Repudiation",
+      "title": "Untracked Administrative Configuration Changes",
+      "description": "An admin updates production plant targets or dealer credit limits and subsequently denies the action.",
+      "threat_vector": "Missing change audit logs on administrative endpoints.",
+      "impacted_attributes": ["Non-Repudiation"],
+      "severity": "MEDIUM",
+      "cvss_score": 6.3,
+      "mitigation_controls": [
+        "Comprehensive audit middleware recording user ID, IP address, timestamp, previous state, and updated state in PostgreSQL 16.",
+        "Audit records are write-only and immutable."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Weekly automated audit log integrity verification."
+    },
+    {
+      "threat_id": "THREAT-API-I01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Information Disclosure",
+      "title": "Cross-Tenant Dealer Data Leakage (BOLA / IDOR)",
+      "description": "A dealer accesses other competing dealers' sales figures or inventory discounts by guessing order IDs or dealer IDs.",
+      "threat_vector": "Broken Object-Level Authorization (OWASP API Top 10 BOLA).",
+      "impacted_attributes": ["Confidentiality"],
+      "severity": "CRITICAL",
+      "cvss_score": 8.8,
+      "mitigation_controls": [
+        "Strict tenant-scoped database queries enforcing WHERE dealer_id = current_user.dealer_id on every data query.",
+        "UUIDv4 identifiers for orders and shipments preventing sequential enumeration.",
+        "Role-Based Access Control (RBAC) enforced via FastAPI dependency injection."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Security alarms on 403 Forbidden spikes indicating enumeration attempts."
+    },
+    {
+      "threat_id": "THREAT-API-D01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Denial of Service",
+      "title": "GraphQL / Heavy Analytics Query Exhaustion",
+      "description": "Resource-intensive queries request aggregate sales data over massive date ranges, saturating PostgreSQL 16 CPU and memory.",
+      "threat_vector": "Unbounded complex query filters and lack of pagination.",
+      "impacted_attributes": ["Availability"],
+      "severity": "HIGH",
+      "cvss_score": 7.5,
+      "mitigation_controls": [
+        "Enforce strict pagination (max 100 records per page) with Pydantic validation.",
+        "Database statement timeout set to 5000ms on all analytics read queries.",
+        "High-performance Redis 7 caching for aggregate dashboard KPI metrics."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "PostgreSQL slow query logging alerting on queries exceeding 1000ms."
+    },
+    {
+      "threat_id": "THREAT-API-E01",
+      "boundary_id": "TB-03-REST-API",
+      "stride_category": "Elevation of Privilege",
+      "title": "Privilege Escalation via Mass Assignment",
+      "description": "A standard dealer user includes 'role': 'SUPER_ADMIN' or 'credit_limit': 9999999 in profile update payload.",
+      "threat_vector": "Mass assignment vulnerability on user or dealer update endpoints.",
+      "impacted_attributes": ["Authorization", "Integrity"],
+      "severity": "CRITICAL",
+      "cvss_score": 8.9,
+      "mitigation_controls": [
+        "Strict Pydantic v2 schemas with extra='forbid' rejecting unapproved fields.",
+        "Dedicated update schemas excluding administrative fields (roles, permissions, credit limits).",
+        "Role elevation restricted exclusively to multi-factor authenticated internal administration portals."
+      ],
+      "residual_risk": "LOW",
+      "monitoring_and_audit": "Immediate notification to Security Operations Center on any forbidden role modification attempt."
+    }
+  ]
+}

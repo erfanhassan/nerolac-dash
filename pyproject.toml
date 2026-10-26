@@ -12,6 +12,7 @@ dependencies = [
     "asyncpg>=0.29.0",
     "redis>=5.0.3",
     "alembic>=1.13.1",
+    "paramiko>=3.4.0",
 ]
 
 [project.optional-dependencies]
@@ -53,3 +54,9 @@ exclude = [
 [[tool.mypy.overrides]]
 module = ["asyncpg.*", "alembic.*", "hvac.*"]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+

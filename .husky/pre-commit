@@ -43,7 +43,7 @@ $MYPY src tests scripts/verify_agent_compliance.py
 
 # 3. Unit and Security Test Suites with pytest
 echo "--> [3/6] Running pytest test suites..."
-$PYTEST tests/backend/ -q
+$PYTEST tests/ -q
 
 # 4. Frontend Linting with ESLint
 echo "--> [4/6] Running ESLint..."

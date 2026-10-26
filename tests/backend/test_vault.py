@@ -61,6 +61,14 @@ class TestVaultIntegration:
         health = client.health_check()
         assert health["cached_secret_count"] >= 1
 
+    def test_sftp_credentials_retrieval(self) -> None:
+        client = VaultClient(vault_url=None)
+        sftp_creds = client.get_sftp_credentials()
+
+        assert sftp_creds["host"] == DEFAULT_FALLBACK_SECRETS["SAP_SFTP_HOST"]
+        assert sftp_creds["user"] == DEFAULT_FALLBACK_SECRETS["SAP_SFTP_USER"]
+        assert sftp_creds["private_key"] == DEFAULT_FALLBACK_SECRETS["SAP_SFTP_PRIVATE_KEY"]
+
     def test_singleton_accessor(self) -> None:
         client_1 = get_vault_client()
         client_2 = get_vault_client()

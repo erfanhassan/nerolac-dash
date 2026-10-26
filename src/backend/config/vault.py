@@ -181,6 +181,17 @@ class VaultClient:
             "url": url,
         }
 
+    def get_sftp_credentials(self) -> dict[str, str]:
+        """Retrieve SAP SFTP connection credentials from Vault."""
+        host = self.get_secret("SAP_SFTP_HOST")
+        user = self.get_secret("SAP_SFTP_USER")
+        private_key = self.get_secret("SAP_SFTP_PRIVATE_KEY")
+        return {
+            "host": host,
+            "user": user,
+            "private_key": private_key,
+        }
+
     def health_check(self) -> dict[str, Any]:
         """Audit health and connection mode of the Vault client."""
         return {

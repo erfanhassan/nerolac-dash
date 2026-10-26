@@ -59,6 +59,7 @@ APPROVED_PYTHON_DEPS = {
     "httpx",
     "ruff",
     "mypy",
+    "paramiko",
 }
 
 # Banned UI tokens & patterns (Strict Bright Light Corporate Mode)

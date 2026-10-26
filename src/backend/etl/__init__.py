@@ -12,6 +12,12 @@ from src.backend.etl.file_verifier import (
     VerificationStatus,
     identify_report_type,
 )
+from src.backend.etl.historical_backfill import (
+    BackfillResult,
+    HistoricalSalesRecord,
+    HistoricalSAPBackfillWorker,
+    TrialBalanceRecord,
+)
 
 __all__ = [
     "FileVerifier",
@@ -22,5 +28,9 @@ __all__ = [
     "DeadLetterHandler",
     "DeadLetterEntry",
     "ValidationReport",
+    "HistoricalSAPBackfillWorker",
+    "TrialBalanceRecord",
+    "HistoricalSalesRecord",
+    "BackfillResult",
 ]
 

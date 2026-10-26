@@ -21,6 +21,8 @@ dependencies = [
     "rapidfuzz>=3.0.0",
     "celery>=5.3.0",
     "pgvector>=0.2.0",
+    "fpdf2>=2.8.0",
+    "openpyxl>=3.1.0",
 ]
 
 [project.optional-dependencies]
@@ -60,7 +62,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*", "lightgbm.*", "prophet.*", "cmdstanpy.*", "celery.*", "rapidfuzz.*", "pgvector.*"]
+module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*", "lightgbm.*", "prophet.*", "cmdstanpy.*", "celery.*", "rapidfuzz.*", "pgvector.*", "fpdf.*", "fpdf2.*", "openpyxl.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

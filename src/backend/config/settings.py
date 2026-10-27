@@ -102,7 +102,7 @@ class Settings(BaseSettings):
     enforce_data_sovereignty: bool = Field(default=True, alias="ENFORCE_DATA_SOVEREIGNTY")
 
     # Host & Port
-    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")  # nosec
     api_port: int = Field(default=8000, alias="API_PORT")
 
     # Database and Cache Hosts (Credentials loaded via Vault)

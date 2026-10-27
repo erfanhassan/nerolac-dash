@@ -1,0 +1,27 @@
+{{- if .Values.podDisruptionBudget.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "nerolac-portal.frontend.fullname" . }}
+  labels:
+    {{- include "nerolac-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "nerolac-portal.frontend.selectorLabels" . | nindent 6 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "nerolac-portal.backend.fullname" . }}
+  labels:
+    {{- include "nerolac-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "nerolac-portal.backend.selectorLabels" . | nindent 6 }}
+{{- end }}

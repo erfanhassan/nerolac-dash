@@ -1,0 +1,54 @@
+{{- if .Values.frontend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nerolac-portal.frontend.fullname" . }}
+  labels:
+    {{- include "nerolac-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  {{- if not .Values.frontend.autoscaling.enabled }}
+  replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "nerolac-portal.frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nerolac-portal.frontend.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.frontend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.frontend.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.service.targetPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "nerolac-portal.fullname" . }}-frontend-env
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.frontend.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.frontend.readinessProbe | nindent 12 }}
+{{- end }}

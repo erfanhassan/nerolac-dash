@@ -1,0 +1,51 @@
+{{- if and .Values.frontend.enabled .Values.frontend.autoscaling.enabled -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "nerolac-portal.frontend.fullname" . }}
+  labels:
+    {{- include "nerolac-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "nerolac-portal.frontend.fullname" . }}
+  minReplicas: {{ .Values.frontend.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.frontend.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.frontend.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.frontend.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.frontend.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.frontend.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+      selectPolicy: Min
+{{- end }}

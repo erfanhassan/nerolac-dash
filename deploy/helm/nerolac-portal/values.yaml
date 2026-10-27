@@ -1,0 +1,190 @@
+# ==============================================================================
+# Nerolac Operations Dashboard - Production Helm Chart Values
+# High Availability | Dual-Threshold HPA (CPU & Memory) | Non-Root Hardening
+# ==============================================================================
+
+global:
+  environment: production
+  domain: portal.nerolac.bd
+
+# ------------------------------------------------------------------------------
+# Frontend: Next.js 15 Standalone
+# ------------------------------------------------------------------------------
+frontend:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: nerolac-cr.azurecr.io/nerolac-frontend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+
+  imagePullSecrets:
+    - name: nerolac-registry-secret
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 1001
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 20
+    periodSeconds: 15
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
+
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+    BACKEND_URL: "http://nerolac-portal-backend:8000"
+
+# ------------------------------------------------------------------------------
+# Backend: FastAPI ASGI Application
+# ------------------------------------------------------------------------------
+backend:
+  enabled: true
+  replicaCount: 4
+
+  image:
+    repository: nerolac-cr.azurecr.io/nerolac-backend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+
+  imagePullSecrets:
+    - name: nerolac-registry-secret
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1536Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 65
+    targetMemoryUtilizationPercentage: 75
+
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 10001
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 25
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
+
+  env:
+    ENVIRONMENT: production
+    PORT: "8000"
+    DATABASE_PORT: "5432"
+    DATABASE_NAME: "nerolac_db"
+    REDIS_PORT: "6379"
+    WORKERS: "4"
+
+# ------------------------------------------------------------------------------
+# Ingress Controller (NGINX) with TLS Termination
+# ------------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+  hosts:
+    - host: portal.nerolac.bd
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /health
+          pathType: Exact
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: nerolac-portal-tls
+      hosts:
+        - portal.nerolac.bd
+
+# ------------------------------------------------------------------------------
+# High Availability Pod Disruption Budgets
+# ------------------------------------------------------------------------------
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

@@ -1,0 +1,306 @@
+# ==============================================================================
+# Nerolac Operations Dashboard - Production CI/CD Workflow
+# SAST (Bandit & Trivy) | Test Suites | Docker Multi-Stage | Zero-Downtime Blue/Green
+# ==============================================================================
+
+name: CI/CD Pipeline & Zero-Downtime Deployment
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: nerolac-cr.azurecr.io
+  BACKEND_IMAGE: nerolac-cr.azurecr.io/nerolac-backend
+  FRONTEND_IMAGE: nerolac-cr.azurecr.io/nerolac-frontend
+  K8S_NAMESPACE: nerolac-production
+
+jobs:
+  # ============================================================================
+  # 1. Static Application Security Testing (SAST)
+  # ============================================================================
+  sast-security:
+    name: SAST Audits (Bandit & Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Run Bandit Python SAST Scan
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+          echo "Executing Bandit SAST Scan against backend source code..."
+          bandit -r src/backend/ -ll -ii -v
+
+      - name: Run Trivy Vulnerability & Secret Scanner (Filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'table'
+
+  # ============================================================================
+  # 2. Backend Automated Test Suite & Coverage Verification
+  # ============================================================================
+  test-backend:
+    name: Backend Test Suite (>85% Coverage & Audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx ruff mypy
+
+      - name: Run Ruff Code Quality Linter
+        run: ruff check .
+
+      - name: Run mypy Static Type Checking
+        run: mypy src/backend
+
+      - name: Run Pytest Suite with Coverage Enforcement (>85%)
+        run: |
+          pytest tests/backend/ --cov=src/backend --cov-fail-under=85 -v
+
+  # ============================================================================
+  # 3. Frontend Linting, Typecheck & Next.js Build
+  # ============================================================================
+  test-frontend:
+    name: Frontend Quality & Standalone Compilation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Next.js 15 Standalone Build
+        run: npm run build
+
+  # ============================================================================
+  # 4. Multi-Stage Docker Container Image Builds & Container Security Scan
+  # ============================================================================
+  docker-build-push:
+    name: Docker Container Image Builds & Trivy Image Scan
+    needs: [sast-security, test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image (Local Test)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/backend.Dockerfile
+          load: true
+          tags: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend Docker Image (Local Test)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/frontend.Dockerfile
+          load: true
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Backend Container Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.BACKEND_IMAGE }}:${{ github.sha }}'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Scan Frontend Container Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.FRONTEND_IMAGE }}:${{ github.sha }}'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Log in to Azure Container Registry
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Push Backend Image to Registry
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/backend.Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+
+      - name: Push Frontend Image to Registry
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/frontend.Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+
+  # ============================================================================
+  # 5. Zero-Downtime Blue/Green Production Deployment
+  # ============================================================================
+  blue-green-deploy:
+    name: Zero-Downtime Blue/Green Production Deployment
+    needs: [docker-build-push]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm 3
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.17.0'
+
+      - name: Lint Helm Deployment Charts
+        run: |
+          helm lint deploy/helm/nerolac-portal/
+
+      - name: Set up Kubernetes Context
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Execute Blue/Green Cutover Engine
+        run: |
+          set -euo pipefail
+
+          echo "=========================================================="
+          echo "  NEROLAC BLUE/GREEN ZERO-DOWNTIME DEPLOYMENT ENGINE"
+          echo "=========================================================="
+
+          # 1. Discover current active color from Ingress or ConfigMap
+          ACTIVE_COLOR=$(kubectl get configmap nerolac-active-color \
+            -n "${K8S_NAMESPACE}" \
+            -o jsonpath='{.data.active_color}' 2>/dev/null || echo "blue")
+
+          if [ "${ACTIVE_COLOR}" = "blue" ]; then
+            TARGET_COLOR="green"
+          else
+            TARGET_COLOR="blue"
+          fi
+
+          echo "Active Environment : [${ACTIVE_COLOR}]"
+          echo "Target Environment : [${TARGET_COLOR}]"
+          echo "Commit SHA         : [${{ github.sha }}]"
+
+          # 2. Deploy / Upgrade the idle target environment using Helm
+          echo "--> Deploying release to target environment [${TARGET_COLOR}]..."
+          helm upgrade --install "nerolac-portal-${TARGET_COLOR}" deploy/helm/nerolac-portal/ \
+            --namespace "${K8S_NAMESPACE}" \
+            --create-namespace \
+            --set frontend.image.tag="${{ github.sha }}" \
+            --set backend.image.tag="${{ github.sha }}" \
+            --set nameOverride="nerolac-${TARGET_COLOR}" \
+            --set fullnameOverride="nerolac-${TARGET_COLOR}" \
+            --set ingress.enabled=false \
+            --wait \
+            --timeout 300s
+
+          # 3. Verify target pod rollout status
+          echo "--> Verifying target environment rollout..."
+          kubectl rollout status deployment/"nerolac-${TARGET_COLOR}-backend" \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=180s
+
+          kubectl rollout status deployment/"nerolac-${TARGET_COLOR}-frontend" \
+            -n "${K8S_NAMESPACE}" \
+            --timeout=180s
+
+          # 4. Execute Synthetic Health Check Probes against target backend
+          echo "--> Executing synthetic health check probes on target environment..."
+          TARGET_BACKEND_IP=$(kubectl get service "nerolac-${TARGET_COLOR}-backend" \
+            -n "${K8S_NAMESPACE}" \
+            -o jsonpath='{.spec.clusterIP}')
+
+          kubectl run health-probe-${{ github.sha }} \
+            --namespace "${K8S_NAMESPACE}" \
+            --rm -i --restart='Never' \
+            --image=curlimages/curl:latest \
+            -- curl -f -s "http://${TARGET_BACKEND_IP}:8000/health" || {
+              echo "❌ ERROR: Health probe failed on target [${TARGET_COLOR}]. Aborting cutover."
+              exit 1
+            }
+
+          # 5. Atomic Cutover: Update Production Ingress to route 100% traffic to TARGET_COLOR
+          echo "--> Atomic cutover: Switching production Ingress to [${TARGET_COLOR}]..."
+          helm upgrade --install "nerolac-portal-ingress" deploy/helm/nerolac-portal/ \
+            --namespace "${K8S_NAMESPACE}" \
+            --set frontend.enabled=false \
+            --set backend.enabled=false \
+            --set ingress.enabled=true \
+            --set backend.service.name="nerolac-${TARGET_COLOR}-backend" \
+            --set frontend.service.name="nerolac-${TARGET_COLOR}-frontend" \
+            --wait
+
+          # 6. Record newly active color in ConfigMap
+          kubectl create configmap nerolac-active-color \
+            -n "${K8S_NAMESPACE}" \
+            --from-literal=active_color="${TARGET_COLOR}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "=========================================================="
+          echo "  SUCCESS: Zero-Downtime Cutover to [${TARGET_COLOR}] Completed!"
+          echo "=========================================================="

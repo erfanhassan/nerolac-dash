@@ -1,0 +1,57 @@
+{{- if .Values.backend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nerolac-portal.backend.fullname" . }}
+  labels:
+    {{- include "nerolac-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "nerolac-portal.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nerolac-portal.backend.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.backend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.backend.service.targetPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "nerolac-portal.fullname" . }}-backend-env
+            - secretRef:
+                name: {{ include "nerolac-portal.fullname" . }}-backend-secrets
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+{{- end }}

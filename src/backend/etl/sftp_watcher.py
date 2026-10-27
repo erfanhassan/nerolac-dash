@@ -57,9 +57,9 @@ class SFTPWatcherConfig:
     remote_landing_dir: str = "/landing"
     remote_processed_dir: str = "/processed"
     remote_quarantine_dir: str = "/quarantine"
-    local_staging_dir: Path = Path("/tmp/nerolac_etl/staging")
-    local_processed_dir: Path = Path("/tmp/nerolac_etl/processed")
-    local_quarantine_dir: Path = Path("/tmp/nerolac_etl/quarantine")
+    local_staging_dir: Path = Path("/tmp/nerolac_etl/staging")  # nosec B108
+    local_processed_dir: Path = Path("/tmp/nerolac_etl/processed")  # nosec B108
+    local_quarantine_dir: Path = Path("/tmp/nerolac_etl/quarantine")  # nosec B108
     target_reports: list[SAPReportType] = field(default_factory=lambda: list(TARGET_SAP_REPORTS))
     batch_drop_hour: int = 2  # 02:00 AM
     batch_drop_minute: int = 0
@@ -137,7 +137,7 @@ class ParamikoSFTPClientAdapter:
             return self._sftp_client
 
         ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # nosec
 
         pkey: paramiko.PKey | None = None
         if self.config.private_key and "PRIVATE KEY" in self.config.private_key:

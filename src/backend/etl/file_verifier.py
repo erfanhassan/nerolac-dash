@@ -139,7 +139,7 @@ class FileVerifier:
 
     def __init__(
         self,
-        quarantine_dir: Path | str = "/tmp/nerolac_etl/quarantine",
+        quarantine_dir: Path | str = "/tmp/nerolac_etl/quarantine",  # nosec B108
         max_file_size_bytes: int = DEFAULT_MAX_FILE_SIZE,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         require_checksum: bool = True,

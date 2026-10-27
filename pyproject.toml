@@ -23,6 +23,8 @@ dependencies = [
     "pgvector>=0.2.0",
     "fpdf2>=2.8.0",
     "openpyxl>=3.1.0",
+    "prometheus-client>=0.20.0",
+    "sentry-sdk>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -63,7 +65,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*", "lightgbm.*", "prophet.*", "cmdstanpy.*", "celery.*", "rapidfuzz.*", "pgvector.*", "fpdf.*", "fpdf2.*", "openpyxl.*"]
+module = ["asyncpg.*", "alembic.*", "hvac.*", "pandera.*", "pandas.*", "fastapi.*", "starlette.*", "redis.*", "lightgbm.*", "prophet.*", "cmdstanpy.*", "celery.*", "rapidfuzz.*", "pgvector.*", "fpdf.*", "fpdf2.*", "openpyxl.*", "prometheus_client.*", "sentry_sdk.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

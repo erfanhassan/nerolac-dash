@@ -13,7 +13,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.api.v1 import api_v1_router
@@ -66,16 +66,23 @@ def create_app() -> FastAPI:
         RateLimiterMiddleware,
         rate_per_minute=100,
         burst_capacity=100,
-        exempt_paths=["/health", "/docs", "/openapi.json", "/redoc", "/"],
+        exempt_paths=["/health", "/metrics", "/docs", "/openapi.json", "/redoc", "/"],
     )
 
-    # 3. PII Masking Middleware (Bangladeshi NID, Phone, Bank Account Redaction)
+    # 3. OpenTelemetry HTTP Request Metrics Middleware
+    from src.backend.observability.telemetry import (
+        TelemetryMiddleware,
+        get_telemetry_manager,
+    )
+    app.add_middleware(TelemetryMiddleware)
+
+    # 4. PII Masking Middleware (Bangladeshi NID, Phone, Bank Account Redaction)
     app.add_middleware(PIIMaskingMiddleware)
 
-    # 4. Microsoft Entra ID JWT Validation & RLS Claims Middleware
+    # 5. Microsoft Entra ID JWT Validation & RLS Claims Middleware
     app.add_middleware(AuthMiddleware)
 
-    # 5. Include API Routers
+    # 6. Include API Routers
     app.include_router(api_v1_router, prefix="/api")
 
     @app.get("/health", tags=["System Health"])
@@ -90,6 +97,16 @@ def create_app() -> FastAPI:
             "database": db_audit,
             "redis": redis_audit,
         }
+
+    @app.get("/metrics", tags=["Observability"])
+    async def metrics_endpoint() -> Response:
+        """Prometheus OpenTelemetry metrics exposition endpoint."""
+        telemetry = get_telemetry_manager()
+        await telemetry.sync_live_infrastructure_stats()
+        return Response(
+            content=telemetry.export_metrics(),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
 
     @app.get("/", tags=["Root"])
     async def root_info() -> dict[str, str]:

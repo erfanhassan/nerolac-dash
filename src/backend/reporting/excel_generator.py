@@ -104,9 +104,7 @@ class ExcelReportExporter:
         ws.views.sheetView[0].showGridLines = True
 
         meta = metadata or {}
-        eval_date = meta.get(
-            "evaluation_date", datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        )
+        eval_date = meta.get("evaluation_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
         gen_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         # 1. Corporate Title Banner
@@ -197,7 +195,7 @@ class ExcelReportExporter:
             fill = FILL_ZEBRA if (i % 2 == 1) else FILL_WHITE
 
             # Extract fields
-            indent_id = item.get("indent_id", f"IND-{i+1:04d}")
+            indent_id = item.get("indent_id", f"IND-{i + 1:04d}")
             m_code = item.get("material_code", "")
             m_name = item.get("material_name", "")
             cat = item.get("category", "")

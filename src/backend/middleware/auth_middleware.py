@@ -113,8 +113,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         content={"detail": "Authentication token has expired.", "error": str(exc)},
                         headers={
                             "WWW-Authenticate": (
-                                'Bearer error="invalid_token", '
-                                'error_description="token_expired"'
+                                'Bearer error="invalid_token", error_description="token_expired"'
                             )
                         },
                     )

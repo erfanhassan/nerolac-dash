@@ -331,9 +331,7 @@ async def generate_pdf_report_with_chart(
     ),
     responses={
         200: {
-            "content": {
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
-            },
+            "content": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}},
             "description": "Formatted Excel Workbook (.xlsx)",
         }
     },
@@ -404,9 +402,7 @@ async def export_excel_report(
     description="Filtered export endpoint for purchase indents or trial balance spreadsheets.",
     responses={
         200: {
-            "content": {
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
-            },
+            "content": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}},
             "description": "Formatted Excel Workbook (.xlsx)",
         }
     },

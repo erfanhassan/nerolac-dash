@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Finance Control Center (Module 1) Visual & Interactive Test Suite', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate directly to Finance Control Center
-    await page.goto('/finance', { waitUntil: 'networkidle' });
+    await page.goto('/finance', { waitUntil: 'domcontentloaded' });
   });
 
   test('should render Corporate Bright Light Mode layout and brand headers', async ({ page }) => {

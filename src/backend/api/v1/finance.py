@@ -14,7 +14,6 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.api.v1.schemas.finance_schemas import (
     ARAPAgingResponse,
@@ -27,7 +26,6 @@ from src.backend.api.v1.services.finance_service import (
     FinanceCalculationService,
     get_finance_service,
 )
-from src.backend.database.session_router import provide_read_session
 
 logger = logging.getLogger("nerolac.api.v1.finance")
 
@@ -52,14 +50,12 @@ async def get_segment_pnl(
         str | None, Query(description="Depot filter (e.g. DEPOT_01) or null for all")
     ] = None,
     service: FinanceCalculationService = Depends(get_finance_service),
-    db_session: AsyncSession = Depends(provide_read_session),
 ) -> SegmentPnLResponse:
     """Retrieve sub-50ms cached or aggregated Segment P&L."""
     return await service.get_segment_pnl(
         fiscal_year=fiscal_year,
         fiscal_month=fiscal_month,
         depot_id=depot_id,
-        db_session=db_session,
     )
 
 
@@ -78,13 +74,11 @@ async def get_supplier_variance(
     ] = None,
     depot_id: Annotated[str | None, Query(description="Filter by receiving depot")] = None,
     service: FinanceCalculationService = Depends(get_finance_service),
-    db_session: AsyncSession = Depends(provide_read_session),
 ) -> SupplierVarianceResponse:
     """Retrieve raw material supplier price variance analysis."""
     return await service.get_supplier_variance(
         material_code=material_code,
         depot_id=depot_id,
-        db_session=db_session,
     )
 
 
@@ -144,10 +138,8 @@ async def simulate_cashflow_get(
 async def get_ar_ap_aging(
     depot_id: Annotated[str | None, Query(description="Filter by depot")] = None,
     service: FinanceCalculationService = Depends(get_finance_service),
-    db_session: AsyncSession = Depends(provide_read_session),
 ) -> ARAPAgingResponse:
     """Retrieve AR / AP Aging buckets and entity details."""
     return await service.get_ar_ap_aging(
         depot_id=depot_id,
-        db_session=db_session,
     )

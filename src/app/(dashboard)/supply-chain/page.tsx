@@ -71,7 +71,7 @@ export default function SupplyChainDashboardPage() {
   };
 
   const formatCurrency = (val: number | undefined) => {
-    if (val === undefined || isNaN(val)) return '—';
+    if (val === undefined || isNaN(val)) return '৳0';
     return `৳${new Intl.NumberFormat('en-BD', { maximumFractionDigits: 0 }).format(val)}`;
   };
 

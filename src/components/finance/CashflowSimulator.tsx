@@ -386,7 +386,8 @@ export function CashflowSimulator() {
               Ending Cash Balance (M6)
             </div>
             <div
-              id="kpi-ending-cash"
+              id="simulated-net-cashflow"
+              data-testid="kpi-ending-cash"
               className="tabular-nums"
               style={{
                 fontSize: '18px',

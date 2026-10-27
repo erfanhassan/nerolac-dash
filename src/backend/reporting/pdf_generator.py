@@ -193,7 +193,7 @@ class PDFReportGenerator:
             height = bar.get_height()
             prefix = "-" if val < 0 else "+"
             ax.annotate(
-                f"{prefix}{abs(val)/100000.0:.1f}L",
+                f"{prefix}{abs(val) / 100000.0:.1f}L",
                 xy=(bar.get_x() + bar.get_width() / 2, height),
                 xytext=(0, 3),
                 textcoords="offset points",
@@ -416,7 +416,7 @@ class PDFReportGenerator:
         pdf.set_font("helvetica", "", 7.5)
 
         for idx, (gl, desc, cat, amt) in enumerate(table_rows):
-            fill = (idx % 2 == 1)
+            fill = idx % 2 == 1
             pdf.set_fill_color(*COLOR_CARD_FILL if fill else COLOR_WHITE)
             pdf.set_text_color(*COLOR_SLATE_CHARCOAL)
             pdf.set_draw_color(*COLOR_BORDER)
@@ -640,7 +640,7 @@ class PDFReportGenerator:
 
         pdf.set_font("helvetica", "", 7.5)
         for idx, item in enumerate(territories[:6]):
-            fill = (idx % 2 == 1)
+            fill = idx % 2 == 1
             pdf.set_fill_color(*COLOR_CARD_FILL if fill else COLOR_WHITE)
             pdf.set_text_color(*COLOR_SLATE_CHARCOAL)
             pdf.set_draw_color(*COLOR_BORDER)

@@ -278,6 +278,40 @@ class DeadLetterHandler:
         )
         return persisted
 
+    async def quarantine_ai_timeout(
+        self,
+        service_name: str,
+        raw_payload: dict[str, Any],
+        error_message: str = "AI API request timed out after SLA threshold",
+        batch_id: str | None = None,
+        persist_to_db: bool = True,
+    ) -> DeadLetterEntry:
+        """Route timed-out AI/LLM request to the Dead-Letter Queue (DLQ)."""
+        time_slug = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        rand_token = uuid.uuid4().hex[:6]
+        resolved_batch = batch_id or f"DLQ_AI_{time_slug}_{rand_token}"
+        entry = DeadLetterEntry(
+            batch_id=resolved_batch,
+            report_type=f"AI_{service_name.upper()}_TIMEOUT",
+            row_index=1,
+            raw_payload=_serialize_for_json(raw_payload),
+            validation_errors=[
+                {
+                    "error_type": "AI_API_TIMEOUT",
+                    "service": service_name,
+                    "message": error_message,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            ],
+            status="TIMEOUT_QUARANTINED",
+        )
+        if persist_to_db:
+            try:
+                await self.persist_dead_letter_entries([entry])
+            except Exception as exc:
+                logger.error("Failed to persist DLQ entry to database: %s", exc)
+        return entry
+
     async def process_and_quarantine(
         self,
         data_source: Path | str | list[dict[str, Any]] | pd.DataFrame,

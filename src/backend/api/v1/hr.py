@@ -12,7 +12,6 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.api.v1.schemas.hr_schemas import (
     CTCScatterPlotResponse,
@@ -23,7 +22,6 @@ from src.backend.api.v1.services.hr_service import (
     HRWorkforceService,
     get_hr_service,
 )
-from src.backend.database.session_router import provide_read_session
 
 logger = logging.getLogger("nerolac.api.v1.hr")
 
@@ -46,10 +44,9 @@ async def get_manpower_capacity(
         Query(description="Filter by supply hub depot code or ALL"),
     ] = None,
     service: HRWorkforceService = Depends(get_hr_service),
-    session: AsyncSession = Depends(provide_read_session),
 ) -> ManpowerCapacityResponse:
     """Return 2-Factor Capacity models and justification cards for 39 vacant territories."""
-    return await service.get_manpower_capacity(depot_id=depot_id, session=session)
+    return await service.get_manpower_capacity(depot_id=depot_id)
 
 
 @router.get(
@@ -72,13 +69,11 @@ async def get_kpi_scorecard(
         Query(description="Filter by supply hub depot code or ALL"),
     ] = None,
     service: HRWorkforceService = Depends(get_hr_service),
-    session: AsyncSession = Depends(provide_read_session),
 ) -> KPIScorecardResponse:
     """Return 0–100 composite weighted KPI scores and 6-axis radar specs for all sales reps."""
     return await service.get_kpi_scorecard(
         assessment_period=assessment_period,
         depot_id=depot_id,
-        session=session,
     )
 
 
@@ -102,11 +97,9 @@ async def get_ctc_scatter_plot(
         Query(description="Filter by supply hub depot code or ALL"),
     ] = None,
     service: HRWorkforceService = Depends(get_hr_service),
-    session: AsyncSession = Depends(provide_read_session),
 ) -> CTCScatterPlotResponse:
     """Return CTC vs Contribution Margin coordinates for Apache ECharts 4-Quadrant Scatter Plot."""
     return await service.get_ctc_scatter_plot(
         period=period,
         depot_id=depot_id,
-        session=session,
     )

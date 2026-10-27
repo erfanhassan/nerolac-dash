@@ -557,6 +557,59 @@ class WhatsAppBanglishParser:
             processing_notes=notes,
         )
 
+    async def parse_with_ai_fallback(
+        self,
+        raw_id: int,
+        waba_message_id: str,
+        sender_phone: str,
+        sender_name: str,
+        raw_text: str,
+        ai_simulate_timeout: bool = False,
+        received_at: str | None = None,
+    ) -> tuple[WhatsAppMessageRecord, Any | None]:
+        """Execute AI parsing with Dead-Letter Queue (DLQ) failover upon timeout."""
+        from src.backend.etl.dead_letter_handler import DeadLetterHandler
+
+        dlq_entry = None
+        if ai_simulate_timeout:
+            # Simulated AI API timeout (e.g. LLM inference > SLA threshold)
+            handler = DeadLetterHandler()
+            dlq_entry = await handler.quarantine_ai_timeout(
+                service_name="whatsapp_llm_parser",
+                raw_payload={
+                    "raw_id": raw_id,
+                    "waba_message_id": waba_message_id,
+                    "sender_phone": sender_phone,
+                    "sender_name": sender_name,
+                    "raw_text": raw_text,
+                },
+                error_message="Meta AI / LLM inference timeout (exceeded 5000ms SLA)",
+            )
+            # Failover to local Banglish vector & regex parser
+            record = self.parse_message(
+                raw_id=raw_id,
+                waba_message_id=waba_message_id,
+                sender_phone=sender_phone,
+                sender_name=sender_name,
+                raw_text=raw_text,
+                received_at=received_at,
+            )
+            record.processing_notes = (
+                f"[DLQ_FAILOVER] AI API timed out; quarantined to DLQ "
+                f"batch '{dlq_entry.batch_id}' and recovered via local engine."
+            )
+            return record, dlq_entry
+
+        record = self.parse_message(
+            raw_id=raw_id,
+            waba_message_id=waba_message_id,
+            sender_phone=sender_phone,
+            sender_name=sender_name,
+            raw_text=raw_text,
+            received_at=received_at,
+        )
+        return record, None
+
 
 # Global Parser Singleton & In-Memory Store
 _parser_instance: WhatsAppBanglishParser | None = None

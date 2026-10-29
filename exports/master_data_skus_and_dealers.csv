@@ -1,0 +1,34 @@
+entity_type,entity_id,code,name_or_title,parent_depot_id,parent_depot_name,category_or_tier,sub_category_or_district,pack_or_credit_limit,unit_price_or_balance,active_status
+DEPOT,DEPOT_01,DEPOT_01,Dhaka Central Hub,DEPOT_01,Dhaka Central Hub,DHAKA,"Tejgaon Industrial Area, Dhaka",N/A,0.0,ACTIVE
+DEPOT,DEPOT_02,DEPOT_02,Chittagong Port Hub,DEPOT_02,Chittagong Port Hub,CHITTAGONG,"Nasirabad I/A, Chittagong",N/A,0.0,ACTIVE
+DEPOT,DEPOT_03,DEPOT_03,Sylhet Depot,DEPOT_03,Sylhet Depot,SYLHET,"Mendibag, Sylhet",N/A,0.0,ACTIVE
+DEPOT,DEPOT_04,DEPOT_04,Bogra Depot,DEPOT_04,Bogra Depot,RAJSHAHI,"Station Road, Bogra",N/A,0.0,ACTIVE
+DEPOT,DEPOT_05,DEPOT_05,Rajshahi Depot,DEPOT_05,Rajshahi Depot,RAJSHAHI,"Sapura I/A, Rajshahi",N/A,0.0,ACTIVE
+DEPOT,DEPOT_06,DEPOT_06,Khulna Depot,DEPOT_06,Khulna Depot,KHULNA,"Khalishpur, Khulna",N/A,0.0,ACTIVE
+DEPOT,DEPOT_07,DEPOT_07,Mymensingh Depot,DEPOT_07,Mymensingh Depot,MYMENSINGH,"Maskanda, Mymensingh",N/A,0.0,ACTIVE
+DEPOT,DEPOT_08,DEPOT_08,Comilla Depot,DEPOT_08,Comilla Depot,CHITTAGONG,"Paduar Bazar, Comilla",N/A,0.0,ACTIVE
+DEPOT,DEPOT_09,DEPOT_09,Barisal Depot,DEPOT_09,Barisal Depot,BARISAL,"Rupatali, Barisal",N/A,0.0,ACTIVE
+DEPOT,DEPOT_10,DEPOT_10,Rangpur Depot,DEPOT_10,Rangpur Depot,RANGPUR,"Dhap, Rangpur",N/A,0.0,ACTIVE
+SKU,SKU_DEC_01,DEC_EXT_EXCEL_WHITE,Nerolac Excel Mica Marble Exterior White,ALL_DEPOTS,National Catalog,DECORATIVE,EXTERIOR_EMULSION,20L,7800.0,ACTIVE
+SKU,SKU_DEC_02,DEC_INT_BEAUTY_GOLD,Nerolac Beauty Gold Washable Interior White,ALL_DEPOTS,National Catalog,DECORATIVE,INTERIOR_EMULSION,20L,6500.0,ACTIVE
+SKU,SKU_DEC_03,DEC_ENAM_SYN_GLOSS,Nerolac Synthetic Gloss Enamel Signal Red,ALL_DEPOTS,National Catalog,DECORATIVE,ENAMEL,4L,1850.0,ACTIVE
+SKU,SKU_DEC_04,DEC_PRIM_WATER_BASED,Nerolac Excel Water-Based Primer,ALL_DEPOTS,National Catalog,DECORATIVE,PRIMER,20L,3800.0,ACTIVE
+SKU,SKU_IND_01,IND_EPOXY_PRIMER_GREY,Nerolac 2K High-Build Epoxy Primer Grey,ALL_DEPOTS,National Catalog,INDUSTRIAL,EPOXY_COATING,20L,9200.0,ACTIVE
+SKU,SKU_IND_02,IND_PU_TOPCOAT_GLOSS,Nerolac Nerothane Polyurethane Gloss Topcoat,ALL_DEPOTS,National Catalog,INDUSTRIAL,PU_COATING,20L,11500.0,ACTIVE
+SKU,SKU_IND_03,IND_FLOOR_COAT_GREEN,Nerolac Floor Armor Self-Leveling Green,ALL_DEPOTS,National Catalog,INDUSTRIAL,FLOOR_COATING,20L,10800.0,ACTIVE
+SKU,SKU_AUTO_01,AUT_REFIN_CLEAR_COAT,Nerolac Carbolac High-Solid 2K Clear Coat,ALL_DEPOTS,National Catalog,AUTOMOTIVE,AUTO_REFINISH,5L,4200.0,ACTIVE
+SKU,SKU_WOOD_01,WOD_POLY_CLEAR_GLOSS,Nerolac Wonderwood Melamine Polyurethane,ALL_DEPOTS,National Catalog,WOOD_FINISH,WOOD_COATING,4L,2400.0,ACTIVE
+SKU,SKU_COAT_01,CON_WATERPROOF_SEAL,Nerolac Perma Damp-Stop Waterproofing,ALL_DEPOTS,National Catalog,CONSTRUCTION,WATERPROOFING,20L,5200.0,ACTIVE
+DEALER,DLR_DHK_001,DLR_DHK_001,Bismillah Paint & Hardware,DEPOT_01,Dhaka Central Hub,PLATINUM,Dhaka Sadar,3500000.0,1850000.0,ACTIVE
+DEALER,DLR_DHK_002,DLR_DHK_002,Mayer Doa Colors Center,DEPOT_01,Dhaka Central Hub,GOLD,Mirpur,2500000.0,1420000.0,ACTIVE
+DEALER,DLR_DHK_003,DLR_DHK_003,Al-Madina Traders,DEPOT_01,Dhaka Central Hub,GOLD,Uttara,2000000.0,950000.0,ACTIVE
+DEALER,DLR_CTG_001,DLR_CTG_001,Karnaphuli Paint House,DEPOT_02,Chittagong Port Hub,PLATINUM,Agrabad,4000000.0,2650000.0,ACTIVE
+DEALER,DLR_CTG_002,DLR_CTG_002,Chattogram Hardware Store,DEPOT_02,Chittagong Port Hub,GOLD,Chawkbazar,2200000.0,1100000.0,ACTIVE
+DEALER,DLR_SYL_001,DLR_SYL_001,Surma Paint Palace,DEPOT_03,Sylhet Depot,SILVER,Zindabazar,1800000.0,920000.0,ACTIVE
+DEALER,DLR_BOG_001,DLR_BOG_001,North Bengal Color Agency,DEPOT_04,Bogra Depot,SILVER,Satmatha,1900000.0,1050000.0,ACTIVE
+DEALER,DLR_RAJ_001,DLR_RAJ_001,Padma Paint Distributors,DEPOT_05,Rajshahi Depot,GOLD,Shaheb Bazar,2100000.0,1300000.0,ACTIVE
+DEALER,DLR_KHU_001,DLR_KHU_001,Rupsha Color World,DEPOT_06,Khulna Depot,SILVER,Dakbangla,2000000.0,1180000.0,ACTIVE
+DEALER,DLR_MYM_001,DLR_MYM_001,Brahmaputra Paint Gallery,DEPOT_07,Mymensingh Depot,SILVER,Choto Bazar,1700000.0,890000.0,ACTIVE
+DEALER,DLR_COM_001,DLR_COM_001,Gomti Paint Supply,DEPOT_08,Comilla Depot,GOLD,Kandirpar,2200000.0,1250000.0,ACTIVE
+DEALER,DLR_BAR_001,DLR_BAR_001,Kirtankhola Hardware,DEPOT_09,Barisal Depot,SILVER,Sadars Road,1500000.0,780000.0,ACTIVE
+DEALER,DLR_RNG_001,DLR_RNG_001,Teesta Paint & Varnishes,DEPOT_10,Rangpur Depot,SILVER,Jahaj Company,1600000.0,840000.0,ACTIVE

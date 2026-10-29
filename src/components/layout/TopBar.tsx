@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { DashboardContext } from '@/context/DashboardContext';
 
 export interface TopBarProps {
   currentModuleTitle?: string;
   onDepotChange?: (depot: string) => void;
   onFiscalPeriodChange?: (period: string) => void;
+  onFiscalYearChange?: (fy: string) => void;
 }
 
 export const DEPOT_OPTIONS = [
@@ -83,20 +85,53 @@ export function TopBar({
   currentModuleTitle = 'Enterprise Operations Control Center',
   onDepotChange,
   onFiscalPeriodChange,
+  onFiscalYearChange,
 }: TopBarProps) {
-  const [selectedDepot, setSelectedDepot] = useState('ALL');
-  const [selectedFY, setSelectedFY] = useState('FY2026_27');
-  const [selectedPeriod, setSelectedPeriod] = useState('P07');
-  const [selectedRole, setSelectedRole] = useState('FINANCE_DIRECTOR');
+  const dashboard = useContext(DashboardContext);
+
+  const [localDepot, setLocalDepot] = useState('ALL');
+  const [localFY, setLocalFY] = useState('FY2026_27');
+  const [localPeriod, setLocalPeriod] = useState('P07');
+  const [localRole, setLocalRole] = useState('FINANCE_DIRECTOR');
+
+  const selectedDepot = dashboard ? dashboard.selectedDepot : localDepot;
+  const selectedFY = dashboard ? dashboard.selectedFY : localFY;
+  const selectedPeriod = dashboard ? dashboard.selectedPeriod : localPeriod;
+  const selectedRole = dashboard ? dashboard.selectedRole : localRole;
 
   const handleDepotSelect = (depotId: string) => {
-    setSelectedDepot(depotId);
+    if (dashboard) {
+      dashboard.setSelectedDepot(depotId);
+    } else {
+      setLocalDepot(depotId);
+    }
     if (onDepotChange) onDepotChange(depotId);
   };
 
+  const handleFiscalYearSelect = (fyId: string) => {
+    if (dashboard) {
+      dashboard.setSelectedFY(fyId);
+    } else {
+      setLocalFY(fyId);
+    }
+    if (onFiscalYearChange) onFiscalYearChange(fyId);
+  };
+
   const handleFiscalPeriodSelect = (periodId: string) => {
-    setSelectedPeriod(periodId);
+    if (dashboard) {
+      dashboard.setSelectedPeriod(periodId);
+    } else {
+      setLocalPeriod(periodId);
+    }
     if (onFiscalPeriodChange) onFiscalPeriodChange(periodId);
+  };
+
+  const handleRoleSelect = (roleId: string) => {
+    if (dashboard) {
+      dashboard.setSelectedRole(roleId);
+    } else {
+      setLocalRole(roleId);
+    }
   };
 
   const currentRoleObj = SSO_ROLES.find((r) => r.id === selectedRole) || SSO_ROLES[0];
@@ -106,21 +141,26 @@ export function TopBar({
     <header
       id="global-topbar"
       style={{
-        height: '60px',
+        minHeight: '60px',
         backgroundColor: '#FFFFFF',
         borderBottom: '1px solid #E2E8F0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
+        padding: '8px 16px',
         position: 'sticky',
         top: 0,
         zIndex: 50,
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* Left: Operational Context & Base Currency */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, minWidth: 0 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div
             style={{
               width: '8px',
@@ -128,35 +168,38 @@ export function TopBar({
               borderRadius: '50%',
               backgroundColor: '#059669',
               boxShadow: '0 0 0 2px rgba(5, 150, 105, 0.2)',
+              flexShrink: 0,
             }}
           />
           <span
             id="topbar-context-title"
             style={{
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 700,
               color: '#0F172A',
               letterSpacing: '-0.2px',
+              whiteSpace: 'nowrap',
             }}
           >
             {currentModuleTitle}
           </span>
         </div>
 
-        <div style={{ width: '1px', height: '18px', backgroundColor: '#E2E8F0' }} />
+        <div style={{ width: '1px', height: '16px', backgroundColor: '#E2E8F0', flexShrink: 0 }} />
 
         {/* Currency & Sovereign Node indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 600,
               color: '#334155',
               backgroundColor: '#F8FAFC',
               border: '1px solid #E2E8F0',
-              padding: '2px 8px',
+              padding: '2px 6px',
               borderRadius: '4px',
               fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
             }}
           >
             BDT (৳)
@@ -169,6 +212,7 @@ export function TopBar({
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
+              whiteSpace: 'nowrap',
             }}
           >
             <span style={{ color: '#059669', fontSize: '10px' }}>●</span> SAP S/4HANA
@@ -177,7 +221,17 @@ export function TopBar({
       </div>
 
       {/* Center-Right Controls: Depot Switcher, Fiscal Picker, SSO Role Badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          flexShrink: 1,
+          minWidth: 0,
+        }}
+      >
         {/* 1. 1-Click Global Depot Switcher */}
         <div
           id="global-depot-switcher-container"
@@ -188,7 +242,8 @@ export function TopBar({
             border: '1px solid #E2E8F0',
             borderRadius: '6px',
             padding: '2px 4px',
-            gap: '6px',
+            gap: '4px',
+            flexShrink: 0,
           }}
         >
           <div
@@ -199,6 +254,7 @@ export function TopBar({
               padding: '0 4px',
               letterSpacing: '0.5px',
               textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
             }}
           >
             Depot:
@@ -212,12 +268,13 @@ export function TopBar({
               backgroundColor: '#FFFFFF',
               border: '1px solid #CBD5E1',
               borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '12px',
+              padding: '3px 6px',
+              fontSize: '11px',
               fontWeight: 600,
               color: '#0F172A',
               cursor: 'pointer',
               outline: 'none',
+              maxWidth: '160px',
             }}
           >
             {DEPOT_OPTIONS.map((depot) => (
@@ -231,7 +288,7 @@ export function TopBar({
           <span
             id="active-depot-badge"
             style={{
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 700,
               color: '#D32F2F',
               backgroundColor: '#FFEBEE',
@@ -239,6 +296,7 @@ export function TopBar({
               borderRadius: '4px',
               padding: '2px 6px',
               fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
             }}
           >
             {activeDepotObj.name}
@@ -254,8 +312,9 @@ export function TopBar({
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',
             borderRadius: '6px',
-            padding: '2px 6px',
-            gap: '6px',
+            padding: '2px 4px',
+            gap: '4px',
+            flexShrink: 0,
           }}
         >
           <div
@@ -265,6 +324,8 @@ export function TopBar({
               color: '#64748B',
               letterSpacing: '0.5px',
               textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              padding: '0 2px',
             }}
           >
             Fiscal (Apr–Mar):
@@ -274,12 +335,12 @@ export function TopBar({
           <select
             id="fiscal-year-select"
             value={selectedFY}
-            onChange={(e) => setSelectedFY(e.target.value)}
+            onChange={(e) => handleFiscalYearSelect(e.target.value)}
             style={{
               backgroundColor: '#FFFFFF',
               border: '1px solid #CBD5E1',
               borderRadius: '4px',
-              padding: '4px 6px',
+              padding: '3px 6px',
               fontSize: '11px',
               fontWeight: 600,
               color: '#0F172A',
@@ -304,7 +365,7 @@ export function TopBar({
               backgroundColor: '#FFFFFF',
               border: '1px solid #CBD5E1',
               borderRadius: '4px',
-              padding: '4px 6px',
+              padding: '3px 6px',
               fontSize: '11px',
               fontWeight: 600,
               color: '#0284C7',
@@ -330,24 +391,26 @@ export function TopBar({
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderRadius: '6px',
-            padding: '3px 8px',
-            gap: '8px',
+            padding: '2px 6px',
+            gap: '6px',
+            flexShrink: 0,
           }}
         >
           {/* Avatar initial */}
           <div
             style={{
-              width: '26px',
-              height: '26px',
+              width: '24px',
+              height: '24px',
               borderRadius: '50%',
               backgroundColor: '#0F172A',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '0.5px',
+              flexShrink: 0,
             }}
           >
             {currentRoleObj.user
@@ -356,18 +419,21 @@ export function TopBar({
               .join('')}
           </div>
 
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div
               style={{
                 fontSize: '11px',
                 fontWeight: 700,
                 color: '#0F172A',
                 lineHeight: '1.2',
+                whiteSpace: 'nowrap',
               }}
             >
               {currentRoleObj.user}
             </div>
-            <div style={{ fontSize: '9px', color: '#64748B', lineHeight: '1.2' }}>
+            <div
+              style={{ fontSize: '9px', color: '#64748B', lineHeight: '1.2', whiteSpace: 'nowrap' }}
+            >
               Azure AD SSO (Sovereign)
             </div>
           </div>
@@ -376,7 +442,7 @@ export function TopBar({
           <select
             id="sso-role-select"
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
+            onChange={(e) => handleRoleSelect(e.target.value)}
             style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -384,9 +450,10 @@ export function TopBar({
               backgroundColor: '#F1F5F9',
               border: '1px solid #E2E8F0',
               borderRadius: '4px',
-              padding: '2px 6px',
+              padding: '2px 4px',
               cursor: 'pointer',
               outline: 'none',
+              maxWidth: '120px',
             }}
           >
             {SSO_ROLES.map((r) => (

@@ -62,6 +62,10 @@ async def get_demand_forecast(
     ),
 )
 async def get_mrp_proposals(
+    depot_id: Annotated[
+        str | None,
+        Query(description="Regional depot code (e.g. DEPOT_01) or ALL"),
+    ] = None,
     category: Annotated[
         str | None,
         Query(description="Raw material category (TIO2, RESIN, SOLVENT, EXTENDER) or ALL"),
@@ -73,4 +77,6 @@ async def get_mrp_proposals(
     forecaster: DemandForecaster = Depends(get_demand_forecaster),
 ) -> MRPProposalsResponse:
     """Return automated raw material purchase reorder indents and safety stock alerts."""
-    return await forecaster.get_mrp_proposals(category=category, alert_level=alert_level)
+    return await forecaster.get_mrp_proposals(
+        depot_id=depot_id, category=category, alert_level=alert_level
+    )

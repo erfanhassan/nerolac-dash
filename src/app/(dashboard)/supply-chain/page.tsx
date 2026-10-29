@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { DashboardContext } from '@/context/DashboardContext';
 import { DemandFanChart, DemandForecastResponse } from '@/components/supply_chain/DemandFanChart';
 import { MRPActionTable, MRPProposalsResponse } from '@/components/supply_chain/MRPActionTable';
 
 export default function SupplyChainDashboardPage() {
-  const [selectedDepot, setSelectedDepot] = useState<string>('ALL');
+  const dashboard = useContext(DashboardContext);
+  const [localDepot, setLocalDepot] = useState<string>('ALL');
+
+  const selectedDepot = dashboard ? dashboard.selectedDepot : localDepot;
+  const setSelectedDepot = dashboard ? dashboard.setSelectedDepot : setLocalDepot;
   const [selectedSku, setSelectedSku] = useState<string>('ALL');
+  const [selectedAlertFilter, setSelectedAlertFilter] = useState<string>('ALL');
 
   const [forecastData, setForecastData] = useState<DemandForecastResponse | null>(null);
   const [mrpData, setMrpData] = useState<MRPProposalsResponse | null>(null);
@@ -64,6 +70,12 @@ export default function SupplyChainDashboardPage() {
     fetchForecast(selectedDepot, selectedSku);
     fetchMRP(selectedDepot);
   }, [selectedDepot, selectedSku]);
+
+  const handleResetAll = () => {
+    setSelectedDepot('ALL');
+    setSelectedSku('ALL');
+    setSelectedAlertFilter('ALL');
+  };
 
   const formatLiters = (val: number | undefined) => {
     if (val === undefined || isNaN(val)) return '—';
@@ -161,14 +173,14 @@ export default function SupplyChainDashboardPage() {
               }}
             >
               <option value="ALL">All Hubs (Bangladesh Operations)</option>
-              <option value="DEPOT_01">Dhaka Central Hub</option>
-              <option value="DEPOT_02">Chittagong Port Depot</option>
-              <option value="DEPOT_03">Bogura Distribution Center</option>
-              <option value="DEPOT_04">Sylhet Depot</option>
-              <option value="DEPOT_05">Khulna Coastal Hub</option>
-              <option value="DEPOT_06">Rajshahi Depot</option>
-              <option value="DEPOT_07">Barishal Depot</option>
-              <option value="DEPOT_08">Comilla Regional Hub</option>
+              <option value="DEPOT_01">DEPOT_01: Dhaka Central Hub</option>
+              <option value="DEPOT_02">DEPOT_02: Chittagong Commercial Port</option>
+              <option value="DEPOT_03">DEPOT_03: Sylhet Surma Depot</option>
+              <option value="DEPOT_04">DEPOT_04: Bogura North Hub</option>
+              <option value="DEPOT_05">DEPOT_05: Khulna Coastal Hub</option>
+              <option value="DEPOT_06">DEPOT_06: Barisal Delta Depot</option>
+              <option value="DEPOT_07">DEPOT_07: Rangpur Frontier Depot</option>
+              <option value="DEPOT_08">DEPOT_08: Mymensingh Valley Depot</option>
             </select>
           </div>
 
@@ -209,14 +221,12 @@ export default function SupplyChainDashboardPage() {
             </select>
           </div>
 
-          {/* Refresh Action */}
+          {/* Reset All Filters Action */}
           <div style={{ alignSelf: 'flex-end' }}>
             <button
+              id="scm-reset-all-btn"
               type="button"
-              onClick={() => {
-                fetchForecast(selectedDepot, selectedSku);
-                fetchMRP(selectedDepot);
-              }}
+              onClick={handleResetAll}
               style={{
                 padding: '7px 12px',
                 backgroundColor: '#F8FAFC',
@@ -224,7 +234,31 @@ export default function SupplyChainDashboardPage() {
                 borderRadius: '4px',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#334155',
+                color: '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              Reset All Filters
+            </button>
+          </div>
+
+          {/* Refresh Action */}
+          <div style={{ alignSelf: 'flex-end' }}>
+            <button
+              id="scm-refresh-btn"
+              type="button"
+              onClick={() => {
+                fetchForecast(selectedDepot, selectedSku);
+                fetchMRP(selectedDepot);
+              }}
+              style={{
+                padding: '7px 12px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #D32F2F',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#D32F2F',
                 cursor: 'pointer',
               }}
             >
@@ -261,12 +295,22 @@ export default function SupplyChainDashboardPage() {
         {/* Card 1: Month 0 Firm SAP Orders */}
         <div
           id="kpi-m0-firm-demand"
+          onClick={() => {
+            document
+              .getElementById('echarts-fanchart-container')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to view Month 0 Firm SAP Committed Orders on Demand Fan Chart"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #1E3A8A',
             borderRadius: '6px',
             padding: '16px',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
           <div
@@ -293,12 +337,22 @@ export default function SupplyChainDashboardPage() {
         {/* Card 2: Month +1 ML Forecast */}
         <div
           id="kpi-m1-forecast"
+          onClick={() => {
+            document
+              .getElementById('echarts-fanchart-container')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to view Month +1 ML Prediction on Demand Fan Chart"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #D32F2F',
             borderRadius: '6px',
             padding: '16px',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
           <div
@@ -325,12 +379,22 @@ export default function SupplyChainDashboardPage() {
         {/* Card 3: Month +2 ML Forecast */}
         <div
           id="kpi-m2-forecast"
+          onClick={() => {
+            document
+              .getElementById('echarts-fanchart-container')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to view Month +2 ML Prediction & Confidence Bands on Demand Fan Chart"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #D97706',
             borderRadius: '6px',
             padding: '16px',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
           <div
@@ -357,12 +421,27 @@ export default function SupplyChainDashboardPage() {
         {/* Card 4: MRP Reorder Commitments */}
         <div
           id="kpi-mrp-commitment"
+          onClick={() => {
+            const targetFilter =
+              mrpData?.critical_alerts_count && mrpData.critical_alerts_count > 0
+                ? 'CRITICAL_STOCKOUT_RISK'
+                : 'REORDER_REQUIRED';
+            setSelectedAlertFilter(selectedAlertFilter === targetFilter ? 'ALL' : targetFilter);
+            document
+              .getElementById('mrp-action-table-container')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to toggle Reorder Required filter on MRP Action Table"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #059669',
             borderRadius: '6px',
             padding: '16px',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
           <div
@@ -399,7 +478,12 @@ export default function SupplyChainDashboardPage() {
       <DemandFanChart forecastData={forecastData} isLoading={isLoadingForecast} />
 
       {/* Section 2: High-Density MRP Action Table */}
-      <MRPActionTable data={mrpData} isLoading={isLoadingMRP} />
+      <MRPActionTable
+        data={mrpData}
+        isLoading={isLoadingMRP}
+        selectedAlertFilter={selectedAlertFilter}
+        onAlertFilterChange={setSelectedAlertFilter}
+      />
     </div>
   );
 }

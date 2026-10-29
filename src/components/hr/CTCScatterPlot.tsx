@@ -39,6 +39,10 @@ interface CTCScatterPlotProps {
   medianCTC: number;
   medianMargin: number;
   isLoading?: boolean;
+  selectedRepId?: string;
+  onSelectRep?: (id: string) => void;
+  activeQuadrantFilter?: string;
+  onQuadrantChange?: (quadrant: string) => void;
 }
 
 export function CTCScatterPlot({
@@ -47,16 +51,27 @@ export function CTCScatterPlot({
   medianCTC,
   medianMargin,
   isLoading = false,
+  selectedRepId,
+  onSelectRep,
+  activeQuadrantFilter: propActiveQuadrantFilter,
+  onQuadrantChange,
 }: CTCScatterPlotProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
-  const [activeQuadrantFilter, setActiveQuadrantFilter] = useState<string>('ALL');
+  const [localActiveQuadrant, setLocalActiveQuadrant] = useState<string>('ALL');
+
+  const currentQuadrant = propActiveQuadrantFilter ?? localActiveQuadrant;
+
+  const handleQuadrantSelect = (q: string) => {
+    setLocalActiveQuadrant(q);
+    onQuadrantChange?.(q);
+  };
 
   const filteredPoints =
-    activeQuadrantFilter === 'ALL'
-      ? points
-      : points.filter((p) => p.quadrant === activeQuadrantFilter);
+    currentQuadrant === 'ALL' ? points : points.filter((p) => p.quadrant === currentQuadrant);
+
+  const selectedRep = selectedRepId ? points.find((p) => p.employee_id === selectedRepId) : null;
 
   useEffect(() => {
     if (!chartRef.current || points.length === 0) return;
@@ -64,6 +79,15 @@ export function CTCScatterPlot({
     if (!chartInstance.current) {
       chartInstance.current = echarts.init(chartRef.current);
     }
+
+    // Attach click handler on points to select rep
+    chartInstance.current.off('click');
+    chartInstance.current.on('click', (params: any) => {
+      const meta: CTCScatterPoint | undefined = params.data?.pointMeta;
+      if (meta && onSelectRep) {
+        onSelectRep(meta.employee_id);
+      }
+    });
 
     const quadrantColorMap: Record<string, string> = {
       STARS: '#059669', // Emerald Green (High Margin, Moderate Cost)
@@ -161,6 +185,7 @@ export function CTCScatterPlot({
       },
       legend: {
         bottom: 10,
+        data: ['Stars', 'Heavy Hitters', 'Ramp-Up', 'Value Destroyers'],
         textStyle: {
           color: '#475569',
           fontSize: 11,
@@ -210,6 +235,44 @@ export function CTCScatterPlot({
       },
       series: [
         ...seriesList,
+        ...(selectedRep
+          ? [
+              {
+                name: 'Selected Officer',
+                type: 'scatter' as const,
+                symbol: 'pin',
+                symbolSize: 34,
+                symbolOffset: [0, -12],
+                z: 25,
+                data: [
+                  {
+                    value: [selectedRep.fully_loaded_ctc_bdt, selectedRep.contribution_margin_bdt],
+                    pointMeta: selectedRep,
+                  },
+                ] as any,
+                itemStyle: {
+                  color: '#D32F2F',
+                  borderColor: '#FFFFFF',
+                  borderWidth: 2,
+                  shadowBlur: 8,
+                  shadowColor: 'rgba(211, 47, 47, 0.4)',
+                },
+                label: {
+                  show: true,
+                  formatter: selectedRep.full_name,
+                  position: 'top' as const,
+                  color: '#0F172A',
+                  backgroundColor: '#FFFFFF',
+                  borderColor: '#D32F2F',
+                  borderWidth: 1.5,
+                  borderRadius: 3,
+                  padding: [2, 6],
+                  fontSize: 10,
+                  fontWeight: 'bold' as const,
+                },
+              },
+            ]
+          : []),
         // Median reference split lines creating the 4 visual quadrants
         {
           name: 'Partition Thresholds',
@@ -260,7 +323,7 @@ export function CTCScatterPlot({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [filteredPoints, points.length, medianCTC, medianMargin]);
+  }, [filteredPoints, points.length, medianCTC, medianMargin, selectedRepId]);
 
   if (isLoading) {
     return (
@@ -296,6 +359,10 @@ export function CTCScatterPlot({
         border: '1px solid #E2E8F0',
         borderRadius: '4px',
         padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* Header and Quadrant Pills */}
@@ -339,7 +406,7 @@ export function CTCScatterPlot({
         {/* Quadrant filter pills */}
         <div style={{ display: 'flex', gap: '6px' }}>
           <button
-            onClick={() => setActiveQuadrantFilter('ALL')}
+            onClick={() => handleQuadrantSelect('ALL')}
             style={{
               padding: '4px 10px',
               fontSize: '11px',
@@ -347,8 +414,8 @@ export function CTCScatterPlot({
               borderRadius: '4px',
               border: '1px solid #CBD5E1',
               cursor: 'pointer',
-              backgroundColor: activeQuadrantFilter === 'ALL' ? '#0F172A' : '#FFFFFF',
-              color: activeQuadrantFilter === 'ALL' ? '#FFFFFF' : '#475569',
+              backgroundColor: currentQuadrant === 'ALL' ? '#0F172A' : '#FFFFFF',
+              color: currentQuadrant === 'ALL' ? '#FFFFFF' : '#475569',
             }}
           >
             All Reps ({points.length})
@@ -360,12 +427,12 @@ export function CTCScatterPlot({
               bg: '#F8FAFC',
               border: '#E2E8F0',
             };
-            const isSelected = activeQuadrantFilter === q.quadrant;
+            const isSelected = currentQuadrant === q.quadrant;
 
             return (
               <button
                 key={q.quadrant}
-                onClick={() => setActiveQuadrantFilter(q.quadrant)}
+                onClick={() => handleQuadrantSelect(q.quadrant)}
                 style={{
                   padding: '4px 10px',
                   fontSize: '11px',
@@ -407,16 +474,24 @@ export function CTCScatterPlot({
             bg: '#F8FAFC',
             border: '#E2E8F0',
           };
+          const isSelected = currentQuadrant === q.quadrant;
 
           return (
             <div
               key={q.quadrant}
+              onClick={() => handleQuadrantSelect(isSelected ? 'ALL' : q.quadrant)}
+              role="button"
+              tabIndex={0}
+              title={`Click to filter scatter and radar to ${q.quadrant}`}
               style={{
                 backgroundColor: style.bg,
-                border: `1px solid ${style.border}`,
+                border: isSelected ? '2px solid #0F172A' : `1px solid ${style.border}`,
                 borderRadius: '4px',
                 padding: '10px 14px',
                 fontVariantNumeric: 'tabular-nums',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: isSelected ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
               }}
             >
               <div
@@ -458,13 +533,61 @@ export function CTCScatterPlot({
         })}
       </div>
 
+      {/* Selected Officer Location Callout */}
+      {selectedRep && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderLeft: '3px solid #D32F2F',
+            borderRadius: '4px',
+            padding: '8px 12px',
+            marginBottom: '12px',
+            fontSize: '11px',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: '#D32F2F', fontWeight: 700 }}>📍 Officer Position:</span>
+            <span style={{ fontWeight: 700, color: '#0F172A' }}>{selectedRep.full_name}</span>
+            <span style={{ color: '#64748B' }}>
+              ({selectedRep.designation} • {selectedRep.depot_name})
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', color: '#475569' }}>
+            <span>
+              CTC:{' '}
+              <strong style={{ color: '#0F172A' }}>
+                BDT {(selectedRep.fully_loaded_ctc_bdt / 1000).toFixed(0)}k
+              </strong>
+            </span>
+            <span>
+              Margin:{' '}
+              <strong style={{ color: '#059669' }}>
+                BDT {(selectedRep.contribution_margin_bdt / 100000).toFixed(1)}L
+              </strong>
+            </span>
+            <span>
+              ROI:{' '}
+              <strong style={{ color: '#2563EB' }}>{selectedRep.roi_multiple.toFixed(2)}x</strong>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ECharts 4-Quadrant Scatter Container */}
       <div
         id="echarts-scatter-container"
         ref={chartRef}
         style={{
           width: '100%',
-          height: '460px',
+          height: '400px',
+          flex: 1,
+          minHeight: '380px',
         }}
       />
     </div>

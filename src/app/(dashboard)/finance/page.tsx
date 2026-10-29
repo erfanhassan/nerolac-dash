@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { DashboardContext } from '@/context/DashboardContext';
 import {
   SegmentPnLWaterfallChart,
   WaterfallDataPoint,
@@ -54,9 +55,17 @@ interface AgingResponse {
 }
 
 export default function FinanceControlCenterPage() {
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
-  const [selectedMonth, setSelectedMonth] = useState<number>(3);
-  const [selectedDepot, setSelectedDepot] = useState<string>('ALL');
+  const dashboard = useContext(DashboardContext);
+  const [localYear, setLocalYear] = useState<number>(2024);
+  const [localMonth, setLocalMonth] = useState<number>(3);
+  const [localDepot, setLocalDepot] = useState<string>('ALL');
+
+  const selectedYear = dashboard ? dashboard.selectedYear : localYear;
+  const setSelectedYear = dashboard ? dashboard.setSelectedYear : setLocalYear;
+  const selectedMonth = dashboard ? dashboard.selectedMonth : localMonth;
+  const setSelectedMonth = dashboard ? dashboard.setSelectedMonth : setLocalMonth;
+  const selectedDepot = dashboard ? dashboard.selectedDepot : localDepot;
+  const setSelectedDepot = dashboard ? dashboard.setSelectedDepot : setLocalDepot;
 
   const [pnlData, setPnlData] = useState<PnLResponse | null>(null);
   const [varianceData, setVarianceData] = useState<SupplierVarianceResponse | null>(null);

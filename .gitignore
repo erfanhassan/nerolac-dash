@@ -33,6 +33,7 @@ dist/
 # Misc
 .DS_Store
 *.pem
+scratch/
 
 # Environment Variables
 .env

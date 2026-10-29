@@ -39,6 +39,14 @@ export function CashflowSimulator() {
   const [simResult, setSimResult] = useState<CashflowSimulationResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
+  const isModified = arCollectionPct !== 85 || dpoDays !== 45 || capexMillion !== 5;
+
+  const handleResetToBaseline = () => {
+    setArCollectionPct(85);
+    setDpoDays(45);
+    setCapexMillion(5);
+  };
+
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
@@ -229,6 +237,30 @@ export function CashflowSimulator() {
             >
               {simResult.liquidity_status} LIQUIDITY
             </span>
+
+            <button
+              id="btn-reset-simulator"
+              type="button"
+              onClick={handleResetToBaseline}
+              disabled={!isModified}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: isModified ? '#D32F2F' : '#94A3B8',
+                backgroundColor: isModified ? '#FFEBEE' : '#F8FAFC',
+                border: `1px solid ${isModified ? '#FFCDD2' : '#E2E8F0'}`,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                cursor: isModified ? 'pointer' : 'default',
+                transition: 'all 0.15s ease',
+              }}
+              title="Reset simulation parameters to corporate baseline (85% AR, 45d DPO, ৳5M CapEx)"
+            >
+              <span>↺</span> Reset to Baseline
+            </button>
           </div>
         )}
       </div>

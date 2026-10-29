@@ -38,6 +38,12 @@ interface RepRadarChartProps {
   teamBenchmark: number[];
   weights: Record<string, number>;
   isLoading?: boolean;
+  selectedRepId?: string;
+  onSelectRep?: (id: string) => void;
+  activeQuadrantFilter?: string;
+  onQuadrantChange?: (quadrant: string) => void;
+  repQuadrantMap?: Record<string, string>;
+  onDepotSelect?: (depotId: string) => void;
 }
 
 export function RepRadarChart({
@@ -46,23 +52,38 @@ export function RepRadarChart({
   teamBenchmark,
   weights,
   isLoading = false,
+  selectedRepId: propSelectedRepId,
+  onSelectRep,
+  activeQuadrantFilter = 'ALL',
+  onQuadrantChange,
+  repQuadrantMap,
+  onDepotSelect,
 }: RepRadarChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
 
-  const [selectedRepId, setSelectedRepId] = useState<string>(
+  const [internalRepId, setInternalRepId] = useState<string>(
     scorecards.length > 0 ? scorecards[0].employee_id : ''
   );
 
-  // Sync selectedRepId if scorecards list changes
+  const activeRepId = propSelectedRepId ?? internalRepId;
+
+  // Sync activeRepId if scorecards list changes and rep is not found
   useEffect(() => {
-    if (scorecards.length > 0 && !scorecards.some((s) => s.employee_id === selectedRepId)) {
-      setSelectedRepId(scorecards[0].employee_id);
+    if (scorecards.length > 0 && !scorecards.some((s) => s.employee_id === activeRepId)) {
+      const nextId = scorecards[0].employee_id;
+      setInternalRepId(nextId);
+      onSelectRep?.(nextId);
     }
-  }, [scorecards, selectedRepId]);
+  }, [scorecards, activeRepId, onSelectRep]);
+
+  const handleRepChange = (newId: string) => {
+    setInternalRepId(newId);
+    onSelectRep?.(newId);
+  };
 
   const selectedRep =
-    scorecards.find((s) => s.employee_id === selectedRepId) ||
+    scorecards.find((s) => s.employee_id === activeRepId) ||
     (scorecards.length > 0 ? scorecards[0] : null);
 
   useEffect(() => {
@@ -224,6 +245,42 @@ export function RepRadarChart({
               label: 'Critical Underperformer (<55)',
             };
 
+  const quadrantDetails: Record<
+    string,
+    { label: string; icon: string; bg: string; color: string; border: string }
+  > = {
+    STARS: {
+      label: 'Stars',
+      icon: '⭐',
+      bg: '#ECFDF5',
+      color: '#065F46',
+      border: '#A7F3D0',
+    },
+    HEAVY_HITTERS: {
+      label: 'Heavy Hitters',
+      icon: '⚡',
+      bg: '#EFF6FF',
+      color: '#1E40AF',
+      border: '#BFDBFE',
+    },
+    RAMP_UP: {
+      label: 'Ramp-Up',
+      icon: '🌱',
+      bg: '#FFFBEB',
+      color: '#92400E',
+      border: '#FDE68A',
+    },
+    VALUE_DESTROYERS: {
+      label: 'Value Destroyers',
+      icon: '⚠️',
+      bg: '#FEF2F2',
+      color: '#991B1B',
+      border: '#FECACA',
+    },
+  };
+
+  const currentRepQuadrant = repQuadrantMap?.[selectedRep.employee_id];
+
   return (
     <div
       id="rep-radar-chart-section"
@@ -232,6 +289,10 @@ export function RepRadarChart({
         border: '1px solid #E2E8F0',
         borderRadius: '4px',
         padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* Section Header & Officer Dropdown */}
@@ -272,37 +333,79 @@ export function RepRadarChart({
           </p>
         </div>
 
-        {/* Rep Selector Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label
-            htmlFor="sales-rep-select"
-            style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}
-          >
-            Sales Officer:
-          </label>
-          <select
-            id="sales-rep-select"
-            value={selectedRepId}
-            onChange={(e) => setSelectedRepId(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#0F172A',
-              backgroundColor: '#F8FAFC',
-              border: '1px solid #CBD5E1',
-              borderRadius: '4px',
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: '220px',
-            }}
-          >
-            {scorecards.map((rep) => (
-              <option key={rep.employee_id} value={rep.employee_id}>
-                {rep.full_name} ({rep.designation}) — {rep.overall_score.toFixed(1)}
-              </option>
-            ))}
-          </select>
+        {/* Rep Selector Dropdown & Active Sync Indicators */}
+        <div
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label
+              htmlFor="sales-rep-select"
+              style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}
+            >
+              Sales Officer:
+            </label>
+            <select
+              id="sales-rep-select"
+              value={activeRepId}
+              onChange={(e) => handleRepChange(e.target.value)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#0F172A',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #CBD5E1',
+                borderRadius: '4px',
+                outline: 'none',
+                cursor: 'pointer',
+                minWidth: '220px',
+              }}
+            >
+              {scorecards.map((rep) => {
+                const qKey = repQuadrantMap?.[rep.employee_id];
+                const isMatch = activeQuadrantFilter !== 'ALL' && qKey === activeQuadrantFilter;
+                return (
+                  <option key={rep.employee_id} value={rep.employee_id}>
+                    {rep.full_name} ({rep.designation}) — {rep.overall_score.toFixed(1)}
+                    {isMatch ? ' ★' : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {activeQuadrantFilter !== 'ALL' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '10px', color: '#64748B' }}>Quadrant Filter:</span>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  backgroundColor: '#0F172A',
+                  color: '#FFFFFF',
+                  padding: '1px 6px',
+                  borderRadius: '3px',
+                }}
+              >
+                {activeQuadrantFilter}
+              </span>
+              <button
+                type="button"
+                onClick={() => onQuadrantChange?.('ALL')}
+                style={{
+                  fontSize: '10px',
+                  color: '#D32F2F',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: 0,
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -310,9 +413,10 @@ export function RepRadarChart({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(340px, 1.4fr) minmax(280px, 1fr)',
+          gridTemplateColumns: 'minmax(320px, 1.3fr) minmax(280px, 1fr)',
           gap: '24px',
           alignItems: 'center',
+          flex: 1,
         }}
       >
         {/* ECharts 6-Axis Radar Container */}
@@ -321,7 +425,7 @@ export function RepRadarChart({
           ref={chartRef}
           style={{
             width: '100%',
-            height: '380px',
+            height: '400px',
           }}
         />
 
@@ -354,7 +458,7 @@ export function RepRadarChart({
                   {selectedRep.employee_code} • {selectedRep.designation}
                 </div>
                 <div style={{ fontSize: '11px', color: '#475569', marginTop: '1px' }}>
-                  {selectedRep.territory_name} • {selectedRep.depot_name}
+                  {selectedRep.territory_name}
                 </div>
               </div>
 
@@ -369,8 +473,8 @@ export function RepRadarChart({
               </div>
             </div>
 
-            {/* Performance tier pill */}
-            <div style={{ marginTop: '10px' }}>
+            {/* Performance tier pill & synchronized cross-links */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
               <span
                 style={{
                   fontSize: '11px',
@@ -384,6 +488,53 @@ export function RepRadarChart({
               >
                 {tierBadgeStyle.label}
               </span>
+
+              {currentRepQuadrant && quadrantDetails[currentRepQuadrant] && (
+                <button
+                  type="button"
+                  onClick={() => onQuadrantChange?.(currentRepQuadrant)}
+                  title="View this quadrant in 4-Quadrant Scatter Matrix"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '3px',
+                    backgroundColor: quadrantDetails[currentRepQuadrant].bg,
+                    border: `1px solid ${quadrantDetails[currentRepQuadrant].border}`,
+                    color: quadrantDetails[currentRepQuadrant].color,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>{quadrantDetails[currentRepQuadrant].icon}</span>
+                  <span>{quadrantDetails[currentRepQuadrant].label}</span>
+                  <span style={{ fontSize: '10px' }}>↗</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onDepotSelect?.(selectedRep.depot_id)}
+                title={`Filter all views to ${selectedRep.depot_name}`}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: '3px',
+                  backgroundColor: '#EFF6FF',
+                  border: '1px solid #BFDBFE',
+                  color: '#1E40AF',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>📍</span>
+                <span>{selectedRep.depot_name}</span>
+              </button>
             </div>
           </div>
 

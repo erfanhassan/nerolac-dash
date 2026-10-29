@@ -10,6 +10,7 @@ export default [
       'dist/**',
       'build/**',
       'package-lock.json',
+      'scratch/**',
     ],
   },
   js.configs.recommended,

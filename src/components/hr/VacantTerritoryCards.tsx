@@ -29,11 +29,22 @@ export interface VacantTerritory {
 interface VacantTerritoryCardsProps {
   territories: VacantTerritory[];
   isLoading?: boolean;
+  onDepotSelect?: (depotId: string) => void;
+  selectedDepot?: string;
+  selectedOfficerInfo?: {
+    name: string;
+    depotId: string;
+    depotName: string;
+    territoryName: string;
+  } | null;
 }
 
 export function VacantTerritoryCards({
   territories,
   isLoading = false,
+  onDepotSelect,
+  selectedDepot,
+  selectedOfficerInfo,
 }: VacantTerritoryCardsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
@@ -57,8 +68,28 @@ export function VacantTerritoryCards({
     );
   }
 
+  // Map common Bangladesh place name spelling aliases (modern vs. corporate ERP transliterations)
+  const normalizeLocation = (str: string): string => {
+    return str
+      .toLowerCase()
+      .replace(/chattogram/g, 'chittagong')
+      .replace(/bogura/g, 'bogra')
+      .replace(/barishal/g, 'barisal')
+      .replace(/cumilla/g, 'comilla')
+      .replace(/jashore/g, 'jessore')
+      .replace(/cox's bazar|coxs bazar/g, 'coxsbazar')
+      .trim();
+  };
+
+  const normalizedQuery = normalizeLocation(searchQuery);
+
   const filteredTerritories = territories.filter((t) => {
+    const haystack = normalizeLocation(
+      `${t.territory_name} ${t.district} ${t.depot_name} ${t.territory_code}`
+    );
     const matchesSearch =
+      normalizedQuery === '' ||
+      haystack.includes(normalizedQuery) ||
       t.territory_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.depot_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -70,6 +101,80 @@ export function VacantTerritoryCards({
 
   return (
     <div id="vacant-territories-section">
+      {/* Officer Territory Focus Banner */}
+      {selectedOfficerInfo && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderLeft: '4px solid #2563EB',
+            borderRadius: '4px',
+            padding: '10px 16px',
+            marginBottom: '16px',
+            fontSize: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '15px' }}>🎯</span>
+            <div>
+              <span style={{ fontWeight: 600, color: '#475569' }}>Selected Officer Context: </span>
+              <strong style={{ color: '#0F172A' }}>{selectedOfficerInfo.name}</strong>
+              <span style={{ color: '#64748B' }}>
+                {' '}
+                is assigned to <strong>{selectedOfficerInfo.depotName}</strong> (
+                {selectedOfficerInfo.territoryName})
+              </span>
+            </div>
+          </div>
+
+          {selectedDepot !== selectedOfficerInfo.depotId ? (
+            <button
+              type="button"
+              onClick={() => onDepotSelect?.(selectedOfficerInfo.depotId)}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                backgroundColor: '#EFF6FF',
+                color: '#1E40AF',
+                border: '1px solid #BFDBFE',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Filter 39 Sectors to {selectedOfficerInfo.depotName} ↗
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: '#059669', fontWeight: 600 }}>
+                ✓ Filtered to {selectedOfficerInfo.depotName}
+              </span>
+              <button
+                type="button"
+                onClick={() => onDepotSelect?.('ALL')}
+                style={{
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backgroundColor: '#FFFFFF',
+                  color: '#64748B',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                View All Hubs
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header and Controls */}
       <div
         style={{
@@ -132,24 +237,67 @@ export function VacantTerritoryCards({
             ))}
           </div>
 
-          {/* Search box */}
-          <input
-            id="territory-search-input"
-            type="text"
-            placeholder="Search district, territory, depot..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              border: '1px solid #CBD5E1',
-              borderRadius: '4px',
-              width: '240px',
-              color: '#0F172A',
-              backgroundColor: '#FFFFFF',
-              outline: 'none',
-            }}
-          />
+          {/* Search box with clear button */}
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <input
+              id="territory-search-input"
+              type="text"
+              placeholder="Search district, territory, depot..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: '6px 28px 6px 12px',
+                fontSize: '12px',
+                border: '1px solid #CBD5E1',
+                borderRadius: '4px',
+                width: '240px',
+                color: '#0F172A',
+                backgroundColor: '#FFFFFF',
+                outline: 'none',
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  lineHeight: 1,
+                  padding: '2px 4px',
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {(searchQuery !== '' || priorityFilter !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setPriorityFilter('ALL');
+              }}
+              style={{
+                fontSize: '11px',
+                color: '#D32F2F',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: 0,
+              }}
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 
@@ -211,10 +359,35 @@ export function VacantTerritoryCards({
                       style={{
                         fontSize: '11px',
                         color: '#64748B',
-                        marginTop: '2px',
+                        marginTop: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      {item.district} District • {item.depot_name}
+                      <span>{item.district} District •</span>
+                      <button
+                        type="button"
+                        onClick={() => onDepotSelect?.(item.depot_id)}
+                        title={`Filter all dashboard views to ${item.depot_name}`}
+                        style={{
+                          background: '#F1F5F9',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '3px',
+                          padding: '1px 6px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          color: '#2563EB',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                        }}
+                      >
+                        <span>📍</span>
+                        <span>{item.depot_name}</span>
+                      </button>
                     </div>
                   </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { DashboardContext } from '@/context/DashboardContext';
 import { VacantTerritoryCards, VacantTerritory } from '@/components/hr/VacantTerritoryCards';
 import {
   RepRadarChart,
@@ -43,13 +44,90 @@ interface ScatterResponse {
 }
 
 export default function HRWorkforceIntelligencePage() {
+  const dashboard = useContext(DashboardContext);
+  const [localPeriod, setLocalPeriod] = useState<string>('2024-M03');
+  const [localDepot, setLocalDepot] = useState<string>('ALL');
+
+  const selectedDepot = dashboard ? dashboard.selectedDepot : localDepot;
+  const setSelectedDepot = dashboard ? dashboard.setSelectedDepot : setLocalDepot;
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2024-M03');
-  const [selectedDepot, setSelectedDepot] = useState<string>('ALL');
+
+  // Synchronized rep & quadrant states
+  const [selectedRepId, setSelectedRepId] = useState<string>('');
+  const [activeQuadrantFilter, setActiveQuadrantFilter] = useState<string>('ALL');
+
+  // Synchronize period with global dashboard fiscal period if in FY 2024
+  useEffect(() => {
+    if (dashboard && dashboard.selectedYear === 2024) {
+      if (dashboard.selectedMonth === 1) setSelectedPeriod('2024-M01');
+      else if (dashboard.selectedMonth === 2) setSelectedPeriod('2024-M02');
+      else if (dashboard.selectedMonth === 3) setSelectedPeriod('2024-M03');
+    }
+  }, [dashboard?.selectedYear, dashboard?.selectedMonth]);
+
+  const handlePeriodChange = (val: string) => {
+    setSelectedPeriod(val);
+    if (dashboard) {
+      if (val === '2024-M01') dashboard.setSelectedMonth(1);
+      else if (val === '2024-M02') dashboard.setSelectedMonth(2);
+      else if (val === '2024-M03') dashboard.setSelectedMonth(3);
+    }
+  };
 
   const [capacityData, setCapacityData] = useState<ManpowerResponse | null>(null);
   const [kpiData, setKpiData] = useState<KPIResponse | null>(null);
   const [scatterData, setScatterData] = useState<ScatterResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Map employee_id -> quadrant from scatter data
+  const repQuadrantMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    if (scatterData?.points) {
+      for (const p of scatterData.points) {
+        map[p.employee_id] = p.quadrant;
+      }
+    }
+    return map;
+  }, [scatterData]);
+
+  // Sync selected rep when scorecards load or change
+  useEffect(() => {
+    if (kpiData?.scorecards && kpiData.scorecards.length > 0) {
+      if (!kpiData.scorecards.some((s) => s.employee_id === selectedRepId)) {
+        setSelectedRepId(kpiData.scorecards[0].employee_id);
+      }
+    }
+  }, [kpiData, selectedRepId]);
+
+  const handleQuadrantChange = (quadrant: string) => {
+    setActiveQuadrantFilter(quadrant);
+    if (quadrant !== 'ALL' && scatterData?.points) {
+      const repInQuad = scatterData.points.find((p) => p.quadrant === quadrant);
+      if (repInQuad) {
+        setSelectedRepId(repInQuad.employee_id);
+      }
+    }
+  };
+
+  const handleResetAll = () => {
+    setSelectedDepot('ALL');
+    handlePeriodChange('2024-M03');
+    setActiveQuadrantFilter('ALL');
+    if (kpiData?.scorecards && kpiData.scorecards.length > 0) {
+      setSelectedRepId(kpiData.scorecards[0].employee_id);
+    }
+  };
+
+  // Derive selected officer information for cross-component context
+  const selectedScorecard = kpiData?.scorecards.find((s) => s.employee_id === selectedRepId);
+  const selectedOfficerInfo = selectedScorecard
+    ? {
+        name: selectedScorecard.full_name,
+        depotId: selectedScorecard.depot_id,
+        depotName: selectedScorecard.depot_name,
+        territoryName: selectedScorecard.territory_name,
+      }
+    : null;
 
   const fetchHRData = async () => {
     setIsLoading(true);
@@ -177,7 +255,7 @@ export default function HRWorkforceIntelligencePage() {
             <select
               id="period-select"
               value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+              onChange={(e) => handlePeriodChange(e.target.value)}
               style={{
                 padding: '6px 12px',
                 fontSize: '12px',
@@ -233,6 +311,24 @@ export default function HRWorkforceIntelligencePage() {
           </div>
 
           <button
+            id="reset-all-filters-btn"
+            onClick={handleResetAll}
+            title="Reset period, regional hub, quadrant, and rep filters to system defaults"
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              backgroundColor: '#F8FAFC',
+              color: '#475569',
+              border: '1px solid #CBD5E1',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Reset All Filters
+          </button>
+
+          <button
             id="refresh-button"
             onClick={fetchHRData}
             style={{
@@ -261,19 +357,32 @@ export default function HRWorkforceIntelligencePage() {
           marginBottom: '24px',
         }}
       >
-        {/* Card 1: Vacant Territories Deficit */}
+        {/* Card 1: Vacant Territories Deficit (Clickable to jump to pipeline) */}
         <div
+          onClick={() => {
+            document
+              .getElementById('vacant-territories-section')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to jump to 39 Vacant Territory Justification Engine"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #D32F2F',
             borderRadius: '4px',
             padding: '16px',
             fontVariantNumeric: 'tabular-nums',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
-            VACANT TERRITORIES (CAPACITY DEFICIT)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
+              VACANT TERRITORIES (CAPACITY DEFICIT)
+            </span>
+            <span style={{ fontSize: '12px', color: '#94A3B8' }}>↓</span>
           </div>
           <div
             style={{
@@ -290,19 +399,32 @@ export default function HRWorkforceIntelligencePage() {
           </div>
         </div>
 
-        {/* Card 2: Unlocked Revenue Potential */}
+        {/* Card 2: Unlocked Revenue Potential (Clickable to jump to pipeline) */}
         <div
+          onClick={() => {
+            document
+              .getElementById('vacant-territories-section')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to view ROI Payback Chips for expansion pipeline"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #059669',
             borderRadius: '4px',
             padding: '16px',
             fontVariantNumeric: 'tabular-nums',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
-            UNLOCKED MONTHLY SALES POTENTIAL
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
+              UNLOCKED MONTHLY SALES POTENTIAL
+            </span>
+            <span style={{ fontSize: '12px', color: '#94A3B8' }}>↓</span>
           </div>
           <div
             style={{
@@ -319,19 +441,35 @@ export default function HRWorkforceIntelligencePage() {
           </div>
         </div>
 
-        {/* Card 3: Active Sales Officers Evaluated */}
+        {/* Card 3: Active Sales Officers Evaluated (Clickable to toggle Top Performers) */}
         <div
+          onClick={() => {
+            handleQuadrantChange(activeQuadrantFilter === 'STARS' ? 'ALL' : 'STARS');
+            document
+              .getElementById('rep-radar-chart-section')
+              ?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          role="button"
+          tabIndex={0}
+          title="Click to toggle Top Performers (Stars) filter across Radar and Scatter Matrix"
           style={{
+            cursor: 'pointer',
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',
             borderLeft: '4px solid #2563EB',
             borderRadius: '4px',
             padding: '16px',
             fontVariantNumeric: 'tabular-nums',
+            transition: 'box-shadow 0.15s ease',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
-            ACTIVE SALES OFFICERS EVALUATED
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>
+              ACTIVE SALES OFFICERS EVALUATED
+            </span>
+            <span style={{ fontSize: '11px', color: '#2563EB', fontWeight: 700 }}>
+              {activeQuadrantFilter === 'STARS' ? 'Showing Stars ★' : 'Filter Stars ↗'}
+            </span>
           </div>
           <div
             style={{
@@ -350,6 +488,7 @@ export default function HRWorkforceIntelligencePage() {
 
         {/* Card 4: 2-Factor Benchmark Constants */}
         <div
+          title="2-Factor Capacity: Sales Revenue Quotient (Territory Target / 15 Lacs BDT) + Beat Workload Quotient (Active Dealers x Visit Frequency / 24 Days)"
           style={{
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',
@@ -385,6 +524,7 @@ export default function HRWorkforceIntelligencePage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
           gap: '24px',
           marginBottom: '32px',
+          alignItems: 'stretch',
         }}
       >
         {/* ECharts 6-Axis Radar Chart */}
@@ -394,6 +534,12 @@ export default function HRWorkforceIntelligencePage() {
           teamBenchmark={kpiData?.team_benchmark_radar_values || []}
           weights={kpiData?.weights || {}}
           isLoading={isLoading}
+          selectedRepId={selectedRepId}
+          onSelectRep={setSelectedRepId}
+          activeQuadrantFilter={activeQuadrantFilter}
+          onQuadrantChange={handleQuadrantChange}
+          repQuadrantMap={repQuadrantMap}
+          onDepotSelect={setSelectedDepot}
         />
 
         {/* ECharts 4-Quadrant Scatter Plot */}
@@ -403,6 +549,10 @@ export default function HRWorkforceIntelligencePage() {
           medianCTC={scatterData?.median_ctc_bdt || 90000}
           medianMargin={scatterData?.median_contribution_margin_bdt || 600000}
           isLoading={isLoading}
+          selectedRepId={selectedRepId}
+          onSelectRep={setSelectedRepId}
+          activeQuadrantFilter={activeQuadrantFilter}
+          onQuadrantChange={handleQuadrantChange}
         />
       </div>
 
@@ -447,7 +597,13 @@ export default function HRWorkforceIntelligencePage() {
           </p>
         </div>
 
-        <VacantTerritoryCards territories={capacityData?.territories || []} isLoading={isLoading} />
+        <VacantTerritoryCards
+          territories={capacityData?.territories || []}
+          isLoading={isLoading}
+          onDepotSelect={setSelectedDepot}
+          selectedDepot={selectedDepot}
+          selectedOfficerInfo={selectedOfficerInfo}
+        />
       </div>
     </div>
   );

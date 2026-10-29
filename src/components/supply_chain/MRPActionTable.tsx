@@ -32,6 +32,8 @@ export interface MRPProposalsResponse {
 interface MRPActionTableProps {
   data: MRPProposalsResponse | null;
   isLoading?: boolean;
+  selectedAlertFilter?: string;
+  onAlertFilterChange?: (filter: string) => void;
 }
 
 type SortField =
@@ -45,12 +47,24 @@ type SortField =
   | 'lead_time_days'
   | 'alert_level';
 
-export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps) {
+export function MRPActionTable({
+  data,
+  isLoading = false,
+  selectedAlertFilter,
+  onAlertFilterChange,
+}: MRPActionTableProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [selectedAlert, setSelectedAlert] = useState<string>('ALL');
+  const [localSelectedAlert, setLocalSelectedAlert] = useState<string>('ALL');
   const [sortField, setSortField] = useState<SortField>('alert_level');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const currentAlert = selectedAlertFilter !== undefined ? selectedAlertFilter : localSelectedAlert;
+
+  const handleAlertSelect = (alertVal: string) => {
+    setLocalSelectedAlert(alertVal);
+    onAlertFilterChange?.(alertVal);
+  };
 
   const categories = useMemo(() => {
     if (!data || !data.proposals) return ['ALL'];
@@ -81,8 +95,8 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
     }
 
     // Alert filter
-    if (selectedAlert !== 'ALL') {
-      result = result.filter((p) => p.alert_level === selectedAlert);
+    if (currentAlert !== 'ALL') {
+      result = result.filter((p) => p.alert_level === currentAlert);
     }
 
     // Sort
@@ -115,7 +129,7 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
     });
 
     return result;
-  }, [data, searchTerm, selectedCategory, selectedAlert, sortField, sortDirection]);
+  }, [data, searchTerm, selectedCategory, currentAlert, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -374,8 +388,8 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
           marginBottom: '16px',
         }}
       >
-        {/* Search Input */}
-        <div style={{ minWidth: '260px', flex: '1 1 260px' }}>
+        {/* Search Input with Clear Button */}
+        <div style={{ minWidth: '260px', flex: '1 1 260px', position: 'relative' }}>
           <input
             id="mrp-search-input"
             type="text"
@@ -384,15 +398,38 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
-              padding: '7px 12px',
+              padding: '7px 28px 7px 12px',
               fontSize: '13px',
               border: '1px solid #CBD5E1',
               borderRadius: '4px',
               outline: 'none',
               backgroundColor: '#F8FAFC',
               color: '#0F172A',
+              boxSizing: 'border-box',
             }}
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              title="Clear search"
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#94A3B8',
+                cursor: 'pointer',
+                fontSize: '13px',
+                lineHeight: 1,
+                padding: '2px',
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Category Pills */}
@@ -432,16 +469,16 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
             <button
               key={item.id}
               type="button"
-              onClick={() => setSelectedAlert(item.id)}
+              onClick={() => handleAlertSelect(item.id)}
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
                 padding: '3px 8px',
                 borderRadius: '4px',
                 border: '1px solid',
-                borderColor: selectedAlert === item.id ? '#0F172A' : '#E2E8F0',
-                backgroundColor: selectedAlert === item.id ? '#0F172A' : '#FFFFFF',
-                color: selectedAlert === item.id ? '#FFFFFF' : '#475569',
+                borderColor: currentAlert === item.id ? '#0F172A' : '#E2E8F0',
+                backgroundColor: currentAlert === item.id ? '#0F172A' : '#FFFFFF',
+                color: currentAlert === item.id ? '#FFFFFF' : '#475569',
                 cursor: 'pointer',
               }}
             >
@@ -449,6 +486,30 @@ export function MRPActionTable({ data, isLoading = false }: MRPActionTableProps)
             </button>
           ))}
         </div>
+
+        {/* Reset Filter Action */}
+        {(searchTerm !== '' || selectedCategory !== 'ALL' || currentAlert !== 'ALL') && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm('');
+              setSelectedCategory('ALL');
+              handleAlertSelect('ALL');
+            }}
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#D32F2F',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: '0 4px',
+            }}
+          >
+            Reset Filters
+          </button>
+        )}
       </div>
 
       {/* High-Density Action Table */}
